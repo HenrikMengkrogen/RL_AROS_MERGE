@@ -4,6 +4,7 @@ import Image from 'next/image';
 import img from '../public/logo_first.png'
 
 
+
 function NavButton({ label }: { label: string }) {
   return (
       <Link href={(label == "Home") ? "/" : `/${label}`.split(" ")[0].toLowerCase()} className="flex w-full justify-center rounded-full bg-foreground py-8 mx-4 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]">

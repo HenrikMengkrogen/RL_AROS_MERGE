@@ -1,29 +1,28 @@
 "use client";
 
 import Image from 'next/image'
-import React, { useState, useEffect, useCallback } from "react";
+import { Header } from './structure';
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import {useInputmiRNA, MiRNAInputField} from "./components"
-
+import { IDesignContext, DesignContext } from './designContext';
 
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 
-//function post_design_request(miRNA1) {
-
-//}
-
-
 export default function Home() {
+    //Read context
+    const idesignContext: IDesignContext = useContext(DesignContext);
     //input declarations
-   const miRNAInput1 = useInputmiRNA();
-   const miRNAInput2 = useInputmiRNA();
+   const miRNAInput1 = useInputmiRNA(0);
+   const miRNAInput2 = useInputmiRNA(1);
    //output declarations
    const [submit, setSubmit] = useState(true)
    const [response, setdata] = useState({
         sequence: "",
         dotB: "",
     });
+    
 
 
     const handleSubmit = useCallback(() => {
@@ -32,8 +31,8 @@ export default function Home() {
                 headers: { "Content-type": "application/json"},
                 //Match inputs here
                 body: JSON.stringify({
-                    miRNA1:miRNAInput1.input_text,
-                    miRNA2:miRNAInput2.input_text
+                    miRNA1:idesignContext.miRNA_list[0],
+                    miRNA2:idesignContext.miRNA_list[1]
                 })
             }).then((res) =>
                 res.json().then((data) => {
@@ -55,6 +54,7 @@ export default function Home() {
 
 
   return (
+    <div className='flex flex-row'>
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
         <MiRNAInputField {...miRNAInput1} />
         <hr />
@@ -64,5 +64,6 @@ export default function Home() {
      <p>{response.sequence}</p>
      <p>{response.dotB}</p>
     </main>
+    </div>
   )
 }
