@@ -1,3 +1,13 @@
+"use client";
+import {ProteinInputField} from "../components"
+
 export default function Page() {
-  return <p>Protein Page</p>;
+  return (
+  <div>
+    <p>Protein Page</p>
+    <ProteinInputField />
+  </div>
+
+
+  );
 }
