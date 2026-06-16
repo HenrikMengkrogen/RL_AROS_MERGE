@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import img from '../public/logo_first.png'
+import img from '../public/logo.svg'
 
 
 
@@ -16,15 +16,17 @@ function NavButton({ label }: { label: string }) {
 
 export function Header() {
   return (
-    <div className="flex flex-col h-full items-center justify-center py-16 px-16 w-1/4">
+    <div className="flex flex-col h-screen items-center justify-center gap-y-8 py-16 px-16  w-1/4 border-4 border-double">
+      <div className=' bg-white rounded-full border-4 border-double'>
       <Image
-          className="flex py-8 px-8"
+          className="flex"
           src={img}
           alt="Team logo"
           width={150}
           height={150}
           priority
         />
+      </div>
       <NavButton label="Home" />
       <NavButton label="miRNA inputs" />
       <NavButton label="Logic gates" />

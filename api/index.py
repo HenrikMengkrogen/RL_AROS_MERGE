@@ -14,8 +14,7 @@ def python_route():
     if request.method == 'POST':
         req_data = request.get_json()
         #TODO Validate incoming data
-        placeholder = "NNNNNN"
-        [res_sequence, res_structure] = construct_design([req_data['miRNA1'], req_data['miRNA2'], placeholder, placeholder, placeholder, placeholder, placeholder, placeholder])
+        [res_sequence, res_structure] = construct_design([req_data['miRNA1'], req_data['miRNA2'], req_data['spacer'], req_data['rbs_site'], req_data['init_toehold'], req_data['b_domain'], req_data['protein'], req_data['toehold2']])
 
         return jsonify({"sequence": res_sequence, 
                 "dotB": res_structure })

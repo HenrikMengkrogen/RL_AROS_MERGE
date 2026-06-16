@@ -10,9 +10,9 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-rgb: 100, 200, 255;   /* Light cyan */
-    --background-start-rgb: 15, 30, 70;  /* Midnight */
-    --background-end-rgb: 30, 50, 100;   /* Dark slate */
+    --foreground-rgb: 15, 30, 70;  /* Midnight */
+    --background-start-rgb: 100, 200, 255;  /* Light cyan */ 
+    --background-end-rgb: 80, 145, 220; /*30, 50, 100;*/   /* Dark slate */
   }
 }
 
