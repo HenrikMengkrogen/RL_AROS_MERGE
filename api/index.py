@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask import request
+import RNA
 
 app = Flask(__name__)
 
@@ -7,6 +8,7 @@ app = Flask(__name__)
 @app.route("/construct", methods=['GET', 'POST'])
 def python_route():
     if request.method == 'GET':
+        print("GET request received")
         return jsonify({"sequence": "AAAAAAA", 
                 "dotB": "(..(..).)" })
     
@@ -14,10 +16,12 @@ def python_route():
     if request.method == 'POST':
         req_data = request.get_json()
         #TODO Validate incoming data
-        [res_sequence, res_structure] = construct_design([req_data['miRNA1'], req_data['miRNA2'], req_data['spacer'], req_data['rbs_site'], req_data['init_toehold'], req_data['b_domain'], req_data['protein'], req_data['toehold2']])
+        [res_sequence, res_structure, disp_structure, mfe] = construct_design([req_data['miRNA1'], req_data['miRNA2'], req_data['spacer'], req_data['rbs_site'], req_data['init_toehold'], req_data['b_domain'], req_data['protein'], req_data['toehold2']])
 
         return jsonify({"sequence": res_sequence, 
-                "dotB": res_structure })
+                "original_exp_structure": res_structure,
+                "disp_structure": disp_structure,
+                "mfe": mfe})
     
 
 
@@ -76,22 +80,29 @@ def construct_design(domains):
 
     if len(domain_order) != len(structure_map):
         print('Error: domain order and structure map are not the same length')
+
+
+    print(structure_map)
     displaced_strand = (miRNA_1 + poly_a_domain + miRNA_2 + Toehold_2).upper()
+    
 
-
+    
 
     print("Shoot")
     sequence = generate_road(
             structure=structure_map,
-            sequence=domain_order
+            sequence=domain_order,
+            verbose=True,
+            directory="../.temp/road"
         )
     print(sequence)
     print("Hit")
-    return [sequence, structure_map]
-    
 
+    test_seqs = f"{displaced_strand}&{sequence}"
+    fc = RNA.fold_compound(test_seqs)
+    structure, mfe = fc.mfe()
 
-'''testing
-    AAUGCACCCGGGCAAGGAUUCU
-    GCUCUGACGAGGUUGCACUACU
-'''
+    print("Sequence :", test_seqs)
+    print("Structure:", structure)
+    print("MFE      :", mfe, "kcal/mol")
+    return [sequence, structure_map, structure, mfe]

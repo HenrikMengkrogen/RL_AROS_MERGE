@@ -21,7 +21,9 @@ export default function RootLayout({
         <DesignProvider>
         <div className='flex flex-row'>
           <Header />
-        {children}
+          <div className='flex flex-col h-screen items-center justify-center gap-y-8 py-16 px-16  w-3/4 border-4 border-double'>
+          {children}
+          </div>
         </div>
         </DesignProvider>
         

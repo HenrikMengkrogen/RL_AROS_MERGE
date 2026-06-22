@@ -1,28 +1,33 @@
 "use client";
 
-import Image from 'next/image'
-import { Header } from '../structure';
-import React, { useState, useEffect, useCallback, useContext } from "react";
-import {useInputmiRNA, MiRNAInputField} from "../components"
+import { useState, useEffect, useCallback, useContext } from "react";
 import { IDesignContext, DesignContext } from '../designContext';
+import { LoadingIndicator, DesignOutput } from '../components'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export default function Page() {
-
    //Read context
     const idesignContext: IDesignContext = useContext(DesignContext);
    //output declarations
-   const [submit, setSubmit] = useState(true)
+   const [submit, setSubmit] = useState(2)
    const [response, setdata] = useState({
         sequence: "",
-        dotB: "",
+        original_exp_structure: "",
+        disp_structure: "",
+        mfe: ""
     });
+    //Loading indicator
+    const [isDataLoading, setIsDataLoading] = useState(false);
     
+    const handleSubmit = useCallback(async () => {
+        if (submit == 2) {
+            return
+        }
+        else {
+        setIsDataLoading(true)
 
-
-    const handleSubmit = useCallback(() => {
-        fetch(BACKEND_URL + "/construct", {
+        await fetch(BACKEND_URL + "/construct", {
                 method: "POST",
                 headers: { "Content-type": "application/json"},
                 //Match inputs here
@@ -41,28 +46,43 @@ export default function Page() {
                     // Setting a data from api
                     setdata({
                         sequence: data.sequence,
-                        dotB: data.dotB,
+                        original_exp_structure: data.original_exp_structure,
+                        disp_structure: data.disp_structure,
+                        mfe: data.mfe
                     });
                 })
-            );
-    }, [submit])
+            )
 
-  useEffect(handleSubmit, [handleSubmit]);
+            setIsDataLoading(false);
+}}, [submit])
+
+  useEffect(() => {handleSubmit()}, [handleSubmit]);
 
 
     function handleButtonSubmit(e: any) {
-        setSubmit(!submit);
+        setSubmit(submit == 2 ? 1 : -submit);
     }
-
+    //Demo1 paramteres
+    function handleDemo1() {
+        idesignContext.setMiRNA_list(["CUCUGAC", "CUCUUUC"])
+        idesignContext.setSpacer("NNNN")
+        idesignContext.setRbs_site("AGGAGGACAGCUAUG")
+        idesignContext.setInit_toehold("AG")
+        idesignContext.setB_domain("UAGUAUG")
+        idesignContext.setToehold2("CA")
+        idesignContext.setProtein("")
+    }
 
   return (
     <div className='flex flex-row'>
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <button onClick={handleDemo1} className="py-4 px-4 rounded-full transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]">Demo data 1</button>
     <button onClick={handleButtonSubmit} className="py-4 px-4 rounded-full transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]">Construct the design!</button>
      <h1>Construct outputs</h1>
-     <p>{response.sequence}</p>
-     <p>{response.dotB}</p>
+     {isDataLoading && <LoadingIndicator />}
+     {!isDataLoading && submit !=2 && <DesignOutput response={response}/>}
     </main>
     </div>
+
   )
 }

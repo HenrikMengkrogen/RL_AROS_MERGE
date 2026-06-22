@@ -1,6 +1,9 @@
 import React from 'react';
 import { useContext } from "react";
 import { IDesignContext, DesignContext } from './designContext';
+import Image from 'next/image';
+import img from '../public/logo.svg'
+
 
 
 
@@ -169,5 +172,37 @@ export function Toehold2InputField() {
         </label>
       </form>
       </div>
+  );
+}
+
+
+//Loading animation
+export function LoadingIndicator() {
+
+  return (
+    <div>
+    <p className='text-center'>Loading...</p>
+    <Image
+          className="flex animate-[spin_2000ms_linear_infinite]"
+          src={img}
+          alt="Team logo"
+          width={150}
+          height={150}
+          priority
+        />
+    </div>
+  );
+
+}
+
+
+export function DesignOutput(response : any) {
+  return (
+    <>
+    <p>Designed sequence: {response.sequence}</p>
+     <p>Original expected structure: {response.original_exp_structure}</p>
+     <p>Structure with displacemenet strand: {response.disp_structure}</p>
+     <p>MFE: {response.mfe}</p>
+     </>
   );
 }
