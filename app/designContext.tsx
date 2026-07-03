@@ -38,29 +38,30 @@ const baseDesignContext: IDesignContext = {
 const DesignContext = createContext<IDesignContext>(baseDesignContext);
 
 const DesignProvider = ({ children }: { children: React.ReactNode})  => {
-  const [_miRNA_list, _setMiRNA_list] = useState(["", ""]);
-  const [_miRNA_name_list, _setMiRNA_name_list] = useState(["", ""]);
-  const [_protein, _setProtein] = useState("");
-  const [_spacer, _setSpacer] = useState("");
-  const [_rbs_site, _setRbs_site] = useState("");
-  const [_toehold, _setToehold] = useState("");
+  const [miRNA_list, setMiRNA_list] = useState(["", ""]);
+  const [miRNA_name_list, setMiRNA_name_list] = useState(["", ""]);
+  const [protein, setProtein] = useState("");
+  const [spacer, setSpacer] = useState("");
+  const [rbs_site, setRbs_site] = useState("");
+  const [toehold, setToehold] = useState("");
 
-  baseDesignContext.miRNA_name_list = _miRNA_name_list
-  baseDesignContext.miRNA_list = _miRNA_list
-  baseDesignContext.protein = _protein
-  baseDesignContext.spacer = _spacer
-  baseDesignContext.rbs_site = _rbs_site
-  baseDesignContext.toehold = _toehold
-
-  baseDesignContext.setMiRNA_list = _setMiRNA_list
-  baseDesignContext.setMiRNA_name_list = _setMiRNA_name_list
-  baseDesignContext.setProtein = _setProtein
-  baseDesignContext.setSpacer = _setSpacer
-  baseDesignContext.setRbs_site = _setRbs_site
-  baseDesignContext.setToehold = _setToehold
+  const value: IDesignContext = {
+    miRNA_list,
+    miRNA_name_list,
+    protein,
+    spacer,
+    rbs_site,
+    toehold,
+    setMiRNA_list,
+    setMiRNA_name_list,
+    setProtein,
+    setSpacer,
+    setRbs_site,
+    setToehold,
+  };
 
   return (
-    <DesignContext.Provider value={baseDesignContext}>
+    <DesignContext.Provider value={value}>
       {children}
     </DesignContext.Provider>
   )

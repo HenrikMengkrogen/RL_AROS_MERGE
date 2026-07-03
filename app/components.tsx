@@ -1,31 +1,42 @@
 import React from 'react';
-import { useContext, useEffect } from "react";
+import { useState, useRef, useContext, useEffect } from "react";
 import { IDesignContext, DesignContext } from './designContext';
 import Image from 'next/image';
 import img from '../public/logo.svg'
 
-
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export function MiRNAInputField({index} :{index : number}) {
   const idesignContext: IDesignContext = useContext(DesignContext);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const debounceRef = useRef<number>();
+
+   useEffect(() => {
+    const query = idesignContext.miRNA_name_list[index]
+    window.clearTimeout(debounceRef.current);
+    
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    debounceRef.current = window.setTimeout(() => {
+      fetch(BACKEND_URL + `/suggest?query=${encodeURIComponent(query)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setSuggestions(data.suggestions ?? ["No matches found"]);
+        })
+        .catch(() => { setSuggestions(["Something went wrong"]);});
+    }, 350);
+    return () => window.clearTimeout(debounceRef.current);
+  }, [idesignContext.miRNA_name_list[index]]);
 
   function handleChange(e: any) {
-        //Get corresponding sequence
-         const fetchData = async ()=>{
-          console.log(1)
-          let res = await fetch('https://www.rnacentral.org/api/v1/rna?format=json')
-          console.log(2)
-          if (res.ok) {
-            let data = await res.json()
-            console.log(data)
-            console.log(3)
+
             const updated_miRNA_list = [...idesignContext.miRNA_list]
             updated_miRNA_list[index] = e.target.value
-            console.log(updated_miRNA_list)
+            //console.log(updated_miRNA_list)
             idesignContext.setMiRNA_list(updated_miRNA_list);
-          }
-    }
-      fetchData()
         //Update sequence to context
         const updated_miRNA_name_list = [...idesignContext.miRNA_name_list]
         updated_miRNA_name_list[index] = e.target.value
@@ -33,19 +44,24 @@ export function MiRNAInputField({index} :{index : number}) {
         idesignContext.setMiRNA_name_list(updated_miRNA_name_list);
     }
 
+    function handleSuggestionClick(e:any) {
+
+    }
   return(
-    <div>
-    <form>
+    <div className='flex flex-col'>
           <label> 
           Enter a miRNA sequence:
+          </label>
           <input
           name='inp_sequence'
             type="text"
-            defaultValue={idesignContext.miRNA_name_list[index]}
+            value={idesignContext.miRNA_name_list[index] ?? ""}
             onChange={handleChange}
           />
-        </label>
-      </form>
+        
+      <div className='flex flex-col divide-y-2 border-2'>
+        {suggestions.map((suggestion, idx )=> <button className='bg-white p-2' key={idx} onClick={handleSuggestionClick}>{suggestion}</button>)}
+      </div>
       </div>
   );
 }

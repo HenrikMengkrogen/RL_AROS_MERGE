@@ -5,14 +5,16 @@ import RNA
 app = Flask(__name__)
 
 
-@app.route("/construct", methods=['GET', 'POST'])
-def python_route():
-    if request.method == 'GET':
-        print("GET request received")
-        return jsonify({"sequence": "AAAAAAA", 
-                "dotB": "(..(..).)" })
-    
+@app.route("/suggest", methods=['GET'])
+def mirna_suggestion():
+    print("We got stuff")
+    return jsonify({"sequence": "", 
+                "suggestions": ['hsa', 'hsa-mir']})
 
+
+
+@app.route("/construct", methods=['POST'])
+def python_route():
     if request.method == 'POST':
         req_data = request.get_json()
         #TODO Validate incoming data
@@ -22,6 +24,8 @@ def python_route():
                 "original_exp_structure": res_structure,
                 "disp_structure": disp_structure,
                 "mfe": mfe})
+    else: 
+        print("Type of request is not POST")
     
 
 
