@@ -37,9 +37,7 @@ export default function Page() {
                     protein: idesignContext.protein,
                     spacer: idesignContext.spacer,
                     rbs_site: idesignContext.rbs_site,
-                    init_toehold: idesignContext.init_toehold,
-                    b_domain: idesignContext.b_domain,
-                    toehold2: idesignContext.toehold2
+                    toehold: idesignContext.toehold
                 })
             }).then((res) =>
                 res.json().then((data) => {
@@ -65,11 +63,10 @@ export default function Page() {
     //Demo1 paramteres
     function handleDemo1() {
         idesignContext.setMiRNA_list(["CUCUGAC", "CUCUUUC"])
+        idesignContext.setMiRNA_name_list(["CUCUGAC", "CUCUUUC"])
         idesignContext.setSpacer("NNNN")
         idesignContext.setRbs_site("AGGAGGACAGCUAUG")
-        idesignContext.setInit_toehold("AG")
-        idesignContext.setB_domain("UAGUAUG")
-        idesignContext.setToehold2("CA")
+        idesignContext.setToehold("CA")
         idesignContext.setProtein("")
     }
 

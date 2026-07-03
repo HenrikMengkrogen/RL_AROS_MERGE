@@ -1,30 +1,38 @@
 import React from 'react';
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { IDesignContext, DesignContext } from './designContext';
 import Image from 'next/image';
 import img from '../public/logo.svg'
 
 
 
-
-export function useInputmiRNA(index : number) {
+export function MiRNAInputField({index} :{index : number}) {
   const idesignContext: IDesignContext = useContext(DesignContext);
-  console.log(idesignContext.miRNA_list)
 
   function handleChange(e: any) {
-        const updated_miRNA_list = [...idesignContext.miRNA_list]
-        updated_miRNA_list[index] = e.target.value
-        console.log(updated_miRNA_list)
-        idesignContext.setMiRNA_list(updated_miRNA_list);
+        //Get corresponding sequence
+         const fetchData = async ()=>{
+          console.log(1)
+          let res = await fetch('https://www.rnacentral.org/api/v1/rna?format=json')
+          console.log(2)
+          if (res.ok) {
+            let data = await res.json()
+            console.log(data)
+            console.log(3)
+            const updated_miRNA_list = [...idesignContext.miRNA_list]
+            updated_miRNA_list[index] = e.target.value
+            console.log(updated_miRNA_list)
+            idesignContext.setMiRNA_list(updated_miRNA_list);
+          }
+    }
+      fetchData()
+        //Update sequence to context
+        const updated_miRNA_name_list = [...idesignContext.miRNA_name_list]
+        updated_miRNA_name_list[index] = e.target.value
+        console.log(updated_miRNA_name_list)
+        idesignContext.setMiRNA_name_list(updated_miRNA_name_list);
     }
 
-  return {
-        input_text: idesignContext.miRNA_list[index],
-        onChange: handleChange
-    };
-}
-
-export function MiRNAInputField(inputProps: any) {
   return(
     <div>
     <form>
@@ -33,8 +41,8 @@ export function MiRNAInputField(inputProps: any) {
           <input
           name='inp_sequence'
             type="text"
-            defaultValue={inputProps.input_text}
-            onChange={inputProps.onChange}
+            defaultValue={idesignContext.miRNA_name_list[index]}
+            onChange={handleChange}
           />
         </label>
       </form>
@@ -109,64 +117,21 @@ export function RbsInputField() {
   );
 }
 
-export function InitToeholdInputField() {
-  const idesignContext: IDesignContext = useContext(DesignContext);
-  function handleChange(e: any) {
-    idesignContext.setInit_toehold(e.target.value)
-  }
-  return(
-    <div>
-    <form>
-          <label> 
-          Enter the initial toehold sequence:
-          <input
-          name='inp_sequence'
-            type="text"
-            defaultValue={idesignContext.init_toehold}
-            onChange={handleChange}
-          />
-        </label>
-      </form>
-      </div>
-  );
-}
 
-export function BDomainInputField() {
+export function ToeholdInputField() {
   const idesignContext: IDesignContext = useContext(DesignContext);
   function handleChange(e: any) {
-    idesignContext.setB_domain(e.target.value)
+    idesignContext.setToehold(e.target.value)
   }
   return(
     <div>
     <form>
           <label> 
-          Enter the B Domain sequence:
+          Enter the toehold sequence:
           <input
           name='inp_sequence'
             type="text"
-            defaultValue={idesignContext.b_domain}
-            onChange={handleChange}
-          />
-        </label>
-      </form>
-      </div>
-  );
-}
-
-export function Toehold2InputField() {
-  const idesignContext: IDesignContext = useContext(DesignContext);
-  function handleChange(e: any) {
-    idesignContext.setToehold2(e.target.value)
-  }
-  return(
-    <div>
-    <form>
-          <label> 
-          Enter the second toehold sequence:
-          <input
-          name='inp_sequence'
-            type="text"
-            defaultValue={idesignContext.toehold2}
+            defaultValue={idesignContext.toehold}
             onChange={handleChange}
           />
         </label>
