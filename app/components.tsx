@@ -9,6 +9,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 export function MiRNAInputField({index} :{index : number}) {
   const idesignContext: IDesignContext = useContext(DesignContext);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  //const [mir_seq_full, set_mir_seq_full] = useState("");
   const debounceRef = useRef<number>();
 
    useEffect(() => {
@@ -25,6 +26,7 @@ export function MiRNAInputField({index} :{index : number}) {
         .then((res) => res.json())
         .then((data) => {
           setSuggestions(data.suggestions ?? ["No matches found"]);
+          //setSuggestions(data.sequence ?? [""]);
         })
         .catch(() => { setSuggestions(["Something went wrong"]);});
     }, 350);

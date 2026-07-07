@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from flask import request
 import RNA
+import sqlite3
 
 app = Flask(__name__)
 
@@ -8,8 +9,20 @@ app = Flask(__name__)
 @app.route("/suggest", methods=['GET'])
 def mirna_suggestion():
     print("We got stuff")
+    query = request.args.get('query')
+    print(query)
+
+    cutoff = 5
+    suggestions = []
+    with sqlite3.connect('../data/mir_database.db') as connection:
+        cursor = connection.cursor()
+        select_query = "SELECT * FROM MiRNAs WHERE name LIKE ?;"
+        cursor.execute(select_query, ("%"+query+"%",))
+        suggestion_results = cursor.fetchmany(cutoff)
+        for suggestion in suggestion_results:
+            suggestions += [suggestion[1]]     
     return jsonify({"sequence": "", 
-                "suggestions": ['hsa', 'hsa-mir']})
+                "suggestions": suggestions})
 
 
 
