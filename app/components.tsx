@@ -6,10 +6,12 @@ import img from '../public/logo.svg'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
+
+
 export function MiRNAInputField({index} :{index : number}) {
   const idesignContext: IDesignContext = useContext(DesignContext);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  //const [mir_seq_full, set_mir_seq_full] = useState("");
+  const [mirSeqFull, setMirSeqFull] = useState("");
   const debounceRef = useRef<number>();
 
    useEffect(() => {
@@ -26,7 +28,7 @@ export function MiRNAInputField({index} :{index : number}) {
         .then((res) => res.json())
         .then((data) => {
           setSuggestions(data.suggestions ?? ["No matches found"]);
-          //setSuggestions(data.sequence ?? [""]);
+          setMirSeqFull(data.sequence);
         })
         .catch(() => { setSuggestions(["Something went wrong"]);});
     }, 350);
@@ -35,8 +37,8 @@ export function MiRNAInputField({index} :{index : number}) {
 
   function handleChange(e: any) {
 
-            const updated_miRNA_list = [...idesignContext.miRNA_list]
-            updated_miRNA_list[index] = e.target.value
+          const updated_miRNA_list = [...idesignContext.miRNA_list]
+          updated_miRNA_list[index] = e.target.value
             //console.log(updated_miRNA_list)
             idesignContext.setMiRNA_list(updated_miRNA_list);
         //Update sequence to context
@@ -46,13 +48,16 @@ export function MiRNAInputField({index} :{index : number}) {
         idesignContext.setMiRNA_name_list(updated_miRNA_name_list);
     }
 
-    function handleSuggestionClick(e:any) {
-
+    function handleSuggestionClick(idx: number) {
+      const updated_miRNA_name_list = [...idesignContext.miRNA_name_list]
+      updated_miRNA_name_list[index] = suggestions[idx]
+      idesignContext.setMiRNA_name_list(updated_miRNA_name_list)
+      setSuggestions([]);
     }
   return(
     <div className='flex flex-col'>
           <label> 
-          Enter a miRNA sequence:
+          Enter a miRNA name:
           </label>
           <input
           name='inp_sequence'
@@ -62,8 +67,9 @@ export function MiRNAInputField({index} :{index : number}) {
           />
         
       <div className='flex flex-col divide-y-2 border-2'>
-        {suggestions.map((suggestion, idx )=> <button className='bg-white p-2' key={idx} onClick={handleSuggestionClick}>{suggestion}</button>)}
+        {suggestions.map((suggestion, idx )=> <button className='bg-white p-2' key={idx} onClick={() => handleSuggestionClick(idx)}>{suggestion}</button>)}
       </div>
+      <p>{mirSeqFull}</p>
       </div>
   );
 }
@@ -71,22 +77,54 @@ export function MiRNAInputField({index} :{index : number}) {
 
 export function ProteinInputField() {
   const idesignContext: IDesignContext = useContext(DesignContext);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [mirSeqFull, setMirSeqFull] = useState("");
+  const debounceRef = useRef<number>();
+
+   useEffect(() => {
+    const query = idesignContext.protein
+    window.clearTimeout(debounceRef.current);
+    
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    debounceRef.current = window.setTimeout(() => {
+      fetch(BACKEND_URL + `/mrna?query=${encodeURIComponent(query)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setSuggestions(data.suggestions ?? ["No matches found"]);
+          setMirSeqFull(data.sequence);
+        })
+        .catch(() => { setSuggestions(["Something went wrong"]);});
+    }, 350);
+    return () => window.clearTimeout(debounceRef.current);
+  }, [idesignContext.protein]);
+
   function handleChange(e: any) {
     idesignContext.setProtein(e.target.value)
-  }
+    }
+
+    function handleSuggestionClick(idx: number) {
+      setSuggestions([]);
+    }
   return(
-    <div>
-    <form>
+    <div className='flex flex-col'>
           <label> 
-          Enter a protein coding sequence:
+          Enter a mRNA name:
+          </label>
           <input
           name='inp_sequence'
             type="text"
-            defaultValue={idesignContext.protein}
+            value={idesignContext.protein ?? ""}
             onChange={handleChange}
           />
-        </label>
-      </form>
+        
+      <div className='flex flex-col divide-y-2 border-2'>
+        {suggestions.map((suggestion, idx)=> <button className='bg-white p-2' key={idx} onClick={() => handleSuggestionClick(idx)}>{suggestion}</button>)}
+      </div>
+      <p>{mirSeqFull}</p>
       </div>
   );
 }

@@ -2,26 +2,68 @@ from flask import Flask, jsonify
 from flask import request
 import RNA
 import sqlite3
+import requests
 
 app = Flask(__name__)
 
 
+
+
+@app.route("/mrna", methods=["GET"])
+def mrna_suggestion():
+    cutoff = 5
+    query = request.args.get('query')
+
+    sequence_result = ""
+    suggestions = []
+
+    base_url = "https://rest.uniprot.org/uniprotkb/search"
+    response = requests.get(base_url +"?fields=accession%2Creviewed%2Cid%2Cprotein_name%2Cgene_names%2Corganism_name%2Clength&query=" + query + "&size=" + str(cutoff))
+
+    if not response.ok:
+        response.raise_for_status()
+
+    try:
+        data = response.json()
+    except:
+        print("Could not parse result") 
+    for entry in data['results']:
+        name = entry['proteinDescription']['recommendedName']['fullName']['value']
+        suggestions += [name]
+    if (len(suggestions) == 0):
+        suggestions = ["No match found"]
+
+    if(len(suggestions) >= 1 and suggestions[0] == query):
+            
+            #x = requests.get("https://rest.ensembl.org/lookup/id/something?content-type=application/json")
+            #search_results = x.json()['entries']
+            #print(search_results)
+            #sequence_result = 
+            suggestions = []
+    
+    
+
+    return jsonify({"sequence": sequence_result, 
+                "suggestions": suggestions})
+
 @app.route("/suggest", methods=['GET'])
 def mirna_suggestion():
-    print("We got stuff")
     query = request.args.get('query')
-    print(query)
-
     cutoff = 5
     suggestions = []
+    sequence_result = ""
     with sqlite3.connect('../data/mir_database.db') as connection:
         cursor = connection.cursor()
         select_query = "SELECT * FROM MiRNAs WHERE name LIKE ?;"
         cursor.execute(select_query, ("%"+query+"%",))
         suggestion_results = cursor.fetchmany(cutoff)
         for suggestion in suggestion_results:
-            suggestions += [suggestion[1]]     
-    return jsonify({"sequence": "", 
+            suggestions += [suggestion[1]] 
+        if(len(suggestions) >= 1 and (suggestions[0].split()[0] == ">" + query or suggestions[0] == query)):
+            sequence_result = suggestion[2]
+            suggestions = []
+    
+    return jsonify({"sequence": sequence_result, 
                 "suggestions": suggestions})
 
 
@@ -31,6 +73,9 @@ def python_route():
     if request.method == 'POST':
         req_data = request.get_json()
         #TODO Validate incoming data
+        #TODO Change defualt, just for testing
+        req_data['protein'] = 'AUGCGUAAAGGAGAAGAACUUUUCACUGGAGUUGUCCCAAUUCUUGUUGAAUUAGAUGGUGAUGUUAAUGGGCACAAAUUUUCUGUCAGUGGAGAGGGUGAAGGUGAUGCAACAUACGGAAAACUUACCCUUAAAUUUAUUUGCACUACUGGAAAACUACCUGUUCCAUGGCCAACACUUGUCACUACUUUCGGUUAUGGUGUUCAAUGCUUUGCGAGAUACCCAGAUCAUAUGAAACAGCAUGACUUUUUCAAGAGUGCCAUGCCCGAAGGUUAUGUACAGGAAAGAACUAUAUUUUUCAAAGAUGACGGGAACUACAAGACACGUGCUGAAGUCAAGUUUGAAGGUGAUACCCUUGUUAAUAGAAUCGAGUUAAAAGGUAUUGAUUUUAAAGAAGAUGGAAACAUUCUUGGACACAAAUUGGAAUACAACUAUAACUCACACAAUGUAUACAUCAUGGCAGACAAACAAAAGAAUGGAAUCAAAGUUAACUUCAAAAUUAGACACAACAUUGAAGAUGGAAGCGUUCAACUAGCAGACCAUUAUCAACAAAAUACUCCAAUUGGCGAUGGCCCUGUCCUUUUACCAGACAACCAUUACCUGUCCACACAAUCUGCCCUUUCGAAAGAUCCCAACGAAAAGAGAGACCACAUGGUCCUUCUUGAGUUUGUAACAGCUGCUGGGAUUACACAUGGCAUGGAUGAACUAUACAAAUAAUAA'
+        print(f"miRNA1: {req_data['miRNA1']} \n miRNA2: {req_data['miRNA2']} \n spacer: {req_data['spacer']} \n rbs_site: {req_data['rbs_site']} \n protein: {req_data['protein']} \n toehold: {req_data['toehold']} \n")
         [res_sequence, res_structure, disp_structure, mfe] = construct_design([req_data['miRNA1'], req_data['miRNA2'], req_data['spacer'], req_data['rbs_site'], req_data['protein'], req_data['toehold']])
 
         return jsonify({"sequence": res_sequence, 
@@ -75,7 +120,7 @@ def construct_design(domains):
     #stem = domains[4]
     #mrna = domains[5]
     #toehold = domains[6]
-    stem = 'NNNNNN'
+    stem = 'NNNNNNNN'
     mrna = domains[4]
     toehold = domains[5]
     poly_c_domain = 'C'*3
