@@ -69,7 +69,9 @@ export function MiRNAInputField({index} :{index : number}) {
       <div className='flex flex-col divide-y-2 border-2'>
         {suggestions.map((suggestion, idx )=> <button className='bg-white p-2' key={idx} onClick={() => handleSuggestionClick(idx)}>{suggestion}</button>)}
       </div>
-      <p>{mirSeqFull}</p>
+      
+        <p>{mirSeqFull}</p>
+      
       </div>
   );
 }
@@ -78,11 +80,11 @@ export function MiRNAInputField({index} :{index : number}) {
 export function ProteinInputField() {
   const idesignContext: IDesignContext = useContext(DesignContext);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [mirSeqFull, setMirSeqFull] = useState("");
+  const [protName, setProtName] = useState("");
   const debounceRef = useRef<number>();
 
    useEffect(() => {
-    const query = idesignContext.protein
+    const query = protName
     window.clearTimeout(debounceRef.current);
     
     if (query.length < 2) {
@@ -95,37 +97,43 @@ export function ProteinInputField() {
         .then((res) => res.json())
         .then((data) => {
           setSuggestions(data.suggestions ?? ["No matches found"]);
-          setMirSeqFull(data.sequence);
+          idesignContext.setProtein(data.sequence);
         })
         .catch(() => { setSuggestions(["Something went wrong"]);});
     }, 350);
     return () => window.clearTimeout(debounceRef.current);
-  }, [idesignContext.protein]);
+  }, [protName]);
 
   function handleChange(e: any) {
-    idesignContext.setProtein(e.target.value)
+    setProtName(e.target.value)
     }
 
     function handleSuggestionClick(idx: number) {
+      setProtName(suggestions[idx])
       setSuggestions([]);
     }
   return(
-    <div className='flex flex-col'>
+    <div className='flex flex-grow flex-col justify-around'>
+    <div className='flex flex-col max-w-1/2 text-wrap'>
           <label> 
-          Enter a mRNA name:
+          Enter a protein name:
           </label>
           <input
           name='inp_sequence'
             type="text"
-            value={idesignContext.protein ?? ""}
+            value={protName ?? ""}
             onChange={handleChange}
           />
         
       <div className='flex flex-col divide-y-2 border-2'>
         {suggestions.map((suggestion, idx)=> <button className='bg-white p-2' key={idx} onClick={() => handleSuggestionClick(idx)}>{suggestion}</button>)}
       </div>
-      <p>{mirSeqFull}</p>
       </div>
+      <div className='flex bg-white h-80 overflow-y-auto'>
+        <p className='break-all'>{idesignContext.protein}</p>
+      </div>
+    </div>
+      
   );
 }
 
@@ -218,12 +226,18 @@ export function LoadingIndicator() {
 
 
 export function DesignOutput(response : any) {
+  console.log(response)
+  console.log(response.response)
+  console.log(response.response.sequence)
   return (
     <>
-    <p>Designed sequence: {response.sequence}</p>
-     <p>Original expected structure: {response.original_exp_structure}</p>
-     <p>Structure with displacemenet strand: {response.disp_structure}</p>
-     <p>MFE: {response.mfe}</p>
+    <h2>Designed sequence: </h2>
+    <div className='flex bg-white max-h-80 overflow-y-auto'>    
+        <p className='break-all'>{response.response.sequence}</p>
+    </div>
+     <p>Original expected structure: {response.response.original_exp_structure}</p>
+     <p>Structure with displacemenet strand: {response.response.disp_structure}</p>
+     <p>MFE: {response.response.mfe}</p>
      </>
   );
 }

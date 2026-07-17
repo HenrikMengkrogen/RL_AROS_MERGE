@@ -1,6 +1,8 @@
 from flask import Flask, jsonify
 from flask import request
 import RNA
+import random
+import math
 import sqlite3
 import requests
 
@@ -18,7 +20,7 @@ def mrna_suggestion():
     suggestions = []
 
     base_url = "https://rest.uniprot.org/uniprotkb/search"
-    response = requests.get(base_url +"?fields=accession%2Creviewed%2Cid%2Cprotein_name%2Cgene_names%2Corganism_name%2Clength&query=" + query + "&size=" + str(cutoff))
+    response = requests.get(base_url +"?fields=accession%2Creviewed%2Cid%2Cprotein_name%2Cgene_names%2Corganism_name%2Csequence%2Cxref_embl&query=" + query + "&size=" + str(cutoff))
 
     if not response.ok:
         response.raise_for_status()
@@ -26,19 +28,27 @@ def mrna_suggestion():
     try:
         data = response.json()
     except:
-        print("Could not parse result") 
+        print("Could not parse result")
+
     for entry in data['results']:
         name = entry['proteinDescription']['recommendedName']['fullName']['value']
         suggestions += [name]
     if (len(suggestions) == 0):
         suggestions = ["No match found"]
 
-    if(len(suggestions) >= 1 and suggestions[0] == query):
-            
-            #x = requests.get("https://rest.ensembl.org/lookup/id/something?content-type=application/json")
-            #search_results = x.json()['entries']
-            #print(search_results)
-            #sequence_result = 
+
+    if (len(suggestions) >= 1 and suggestions[0] == query):
+            #TODO properly validate sequence source allow sequence selection
+            for databaseRef in data['results'][0]['uniProtKBCrossReferences']:
+                if (databaseRef['database'] == 'EMBL'):
+                    for property in databaseRef['properties']:
+                        if (property['key'] == 'MoleculeType' and property['value'] == 'mRNA'):
+                            seq_id = databaseRef['id']
+
+
+            seq = requests.get('https://www.ebi.ac.uk/ena/browser/api/fasta/M62654')
+            #TODO maybe also return the first line with the metadata
+            sequence_result = ''.join(seq.text.split('\n')[1:])
             suggestions = []
     
     
@@ -74,7 +84,6 @@ def python_route():
         req_data = request.get_json()
         #TODO Validate incoming data
         #TODO Change defualt, just for testing
-        req_data['protein'] = 'AUGCGUAAAGGAGAAGAACUUUUCACUGGAGUUGUCCCAAUUCUUGUUGAAUUAGAUGGUGAUGUUAAUGGGCACAAAUUUUCUGUCAGUGGAGAGGGUGAAGGUGAUGCAACAUACGGAAAACUUACCCUUAAAUUUAUUUGCACUACUGGAAAACUACCUGUUCCAUGGCCAACACUUGUCACUACUUUCGGUUAUGGUGUUCAAUGCUUUGCGAGAUACCCAGAUCAUAUGAAACAGCAUGACUUUUUCAAGAGUGCCAUGCCCGAAGGUUAUGUACAGGAAAGAACUAUAUUUUUCAAAGAUGACGGGAACUACAAGACACGUGCUGAAGUCAAGUUUGAAGGUGAUACCCUUGUUAAUAGAAUCGAGUUAAAAGGUAUUGAUUUUAAAGAAGAUGGAAACAUUCUUGGACACAAAUUGGAAUACAACUAUAACUCACACAAUGUAUACAUCAUGGCAGACAAACAAAAGAAUGGAAUCAAAGUUAACUUCAAAAUUAGACACAACAUUGAAGAUGGAAGCGUUCAACUAGCAGACCAUUAUCAACAAAAUACUCCAAUUGGCGAUGGCCCUGUCCUUUUACCAGACAACCAUUACCUGUCCACACAAUCUGCCCUUUCGAAAGAUCCCAACGAAAAGAGAGACCACAUGGUCCUUCUUGAGUUUGUAACAGCUGCUGGGAUUACACAUGGCAUGGAUGAACUAUACAAAUAAUAA'
         print(f"miRNA1: {req_data['miRNA1']} \n miRNA2: {req_data['miRNA2']} \n spacer: {req_data['spacer']} \n rbs_site: {req_data['rbs_site']} \n protein: {req_data['protein']} \n toehold: {req_data['toehold']} \n")
         [res_sequence, res_structure, disp_structure, mfe] = construct_design([req_data['miRNA1'], req_data['miRNA2'], req_data['spacer'], req_data['rbs_site'], req_data['protein'], req_data['toehold']])
 
@@ -105,6 +114,135 @@ def comp(seq): # This is just generate the complementary domains -> since the sc
             rna_seq += n.swapcase()
     return rna_seq[::-1]
 
+def get_pair_map(structure):
+    pair_map = {}
+    stack = []
+    for i, c in enumerate(structure):
+        if c == '(':
+            stack.append(i)
+        elif c == ')':
+            j = stack.pop()
+            pair_map[i] = j
+            pair_map[j] = i
+
+    return pair_map
+
+
+
+def mutate_seq(seq_in, structure, wobble_frequency=0.05):
+    comp_dict = {'A': 'U', 'U': 'A', 'G': 'C', 'C': 'G'}
+    nucleotides = ['A', 'U', 'G', 'C']
+    pair_map = get_pair_map(structure)
+    mut_seq = list(seq_in)
+
+    for i in range(len(mut_seq)):
+        if mut_seq[i] != 'N':
+            continue  
+
+        if i in pair_map:
+            j = pair_map[i]
+            if mut_seq[j] != 'N':
+                
+                mut_seq[i] = comp_dict[mut_seq[j]]
+            else:
+                
+                choice = random.choice(nucleotides)
+                mut_seq[i] = choice
+                if random.random() > (1 - wobble_frequency) and mut_seq[i] == 'G': # Adds wobble basepairs with the specified frequency
+                    mut_seq[j] = 'U'
+
+                else:
+                    mut_seq[j] = comp_dict[choice]
+        else:
+            
+            mut_seq[i] = random.choice(nucleotides)
+
+    return ''.join(mut_seq)
+
+
+def bp_distance_to_target(seq, target_structure):
+    md = RNA.md()
+    md.temperature = 37.0
+    md.dangles = 1
+    fc = RNA.fold_compound(seq, md)
+    ss, mfe = fc.mfe()
+    
+    return RNA.bp_distance(ss, target_structure), ss, mfe
+
+
+
+def hill_climb_design(seq_in, structure, pair_map, n_positions, max_steps=10000,
+                       n_keep=5, temperature=1.0, cooling_rate=0.999, wobble_frequency=0.05): 
+    comp_dict = {'A': 'U', 'U': 'A', 'G': 'C', 'C': 'G'}
+
+    current = mutate_seq(seq_in, structure, wobble_frequency=wobble_frequency)  
+    current_dist, current_ss, current_mfe = bp_distance_to_target(current, structure)
+
+    
+    best_candidates = [(current_dist, current, current_ss, current_mfe)]
+
+    print(seq_in + "\n")
+    print(n_positions)
+
+    for step in range(max_steps):
+        if best_candidates[0][0] == 0 and len(best_candidates) >= n_keep: # remove and len(best_candidates) >= n_keep to let the function iterate all 20 000 times
+            break
+        
+        i = random.choice(n_positions)
+        candidate = list(current)
+
+        if i in pair_map:
+            j = pair_map[i]
+            choice = random.choice(['A', 'U', 'G', 'C'])
+            candidate[i] = choice
+            if random.random() > (1 - wobble_frequency) and choice == 'G': # Adds wobble basepairs with the specified frequency
+                candidate[j] = 'U'
+            else:
+                candidate[j] = comp_dict[choice]
+        else:
+            candidate[i] = random.choice(['A', 'U', 'G', 'C'])
+
+        candidate = ''.join(candidate)
+        dist, ss, mfe = bp_distance_to_target(candidate, structure)
+
+        
+        accept = dist <= current_dist or random.random() < math.exp(-(dist - current_dist) / max(temperature, 1e-6))
+
+        if accept:
+            current = candidate
+            current_dist = dist
+            current_ss = ss
+            current_mfe = mfe
+            
+            existing_seqs = {c[1] for c in best_candidates}
+            if candidate not in existing_seqs:
+                best_candidates.append((dist, candidate, ss, mfe))
+                best_candidates.sort(key=lambda x: x[0])
+                best_candidates = best_candidates[:n_keep]
+
+        temperature *= cooling_rate
+        
+        if step % 500 == 0:
+            print(f"step {step}: current_dist={current_dist}, best_dist={best_candidates[0][0]}, temp={temperature:.4f}")
+
+    return best_candidates
+
+
+def multi_start_hill_climb(seq_in, structure, pair_map, n_positions,
+                             n_runs=1, max_steps=5000, wobble_frequency=0.05): 
+    results = []
+    for run in range(n_runs):
+        pool = hill_climb_design(seq_in, structure, pair_map, n_positions,
+                                  max_steps=max_steps, n_keep=1, wobble_frequency = wobble_frequency)
+        results.append(pool[0])
+        print(f"Run {run}: best_dist={pool[0][0]}")
+
+    results.sort(key=lambda x: x[3])
+
+   
+    return results
+
+
 
 def construct_design(domains):
     miRNA_1 = domains[0] 
@@ -130,6 +268,8 @@ def construct_design(domains):
     poly_a_domain = 'A'*len(spacer_2)
     poly_u_domain = 'U'*3
     middle_stem = 'N'*(len(miRNA_1) + len(miRNA_2))
+    algorithm_selector = 'Hill'
+    print("0")
     
     domain_order = (
         miRNA_1 + poly_c_domain + miRNA_2 + loop + comp(toehold) + comp(miRNA_2)
@@ -160,22 +300,29 @@ def construct_design(domains):
     
 
     
+    if algorithm_selector == 'Road':
+        print("Shoot")
+        sequence = generate_road(
+                structure=structure_map,
+                sequence=domain_order,
+                verbose=True,
+                directory="../.temp/road"
+            )
+        print(sequence)
+        print("Hit")
 
-    print("Shoot")
-    sequence = generate_road(
-            structure=structure_map,
-            sequence=domain_order,
-            verbose=True,
-            directory="../.temp/road"
-        )
-    print(sequence)
-    print("Hit")
+        test_seqs = f"{displaced_strand}&{sequence}"
+        fc = RNA.fold_compound(test_seqs)
+        structure, mfe = fc.mfe()
+    
+        print("Sequence :", test_seqs)
+        print("Structure:", structure)
+        print("MFE      :", mfe, "kcal/mol")
+        return [sequence, structure_map, structure, mfe]
 
-    test_seqs = f"{displaced_strand}&{sequence}"
-    fc = RNA.fold_compound(test_seqs)
-    structure, mfe = fc.mfe()
+    if algorithm_selector == 'Hill':
+        results = multi_start_hill_climb(domain_order, structure_map, get_pair_map(structure_map), [i for i, x in enumerate(domain_order) if x == "N"])
+        print(results)
+        best_result = min(results, key=lambda x: x[0])
+        return [best_result[1], structure_map, best_result[2], best_result[3]]
 
-    print("Sequence :", test_seqs)
-    print("Structure:", structure)
-    print("MFE      :", mfe, "kcal/mol")
-    return [sequence, structure_map, structure, mfe]
