@@ -4,6 +4,9 @@ import { IDesignContext, DesignContext } from './designContext';
 import Image from 'next/image';
 import img from '../public/logo.svg'
 
+import { PluginContext } from 'molstar/lib/mol-plugin/context';
+import { DefaultPluginSpec } from 'molstar/lib/mol-plugin/spec';
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 
@@ -240,4 +243,47 @@ export function DesignOutput(response : any) {
      <p>MFE: {response.response.mfe}</p>
      </>
   );
+}
+
+
+export function Viewer3d({ url = 'https://files.rcsb.org/download/1CRN.cif' }) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+
+    const canvas = canvasRef.current;
+    const parent = parentRef.current;
+    if (!canvas || !parent) return;
+
+    let disposed = false;
+    let plugin = new PluginContext(DefaultPluginSpec());
+    
+    (async () => {
+      await plugin.init();
+
+      if (disposed) { plugin.dispose(); return; }
+      const ok = await plugin.initViewerAsync(canvas, parent);
+      if (!ok) {
+        console.error('Failed to init Mol* viewer');
+          return;
+      }
+
+      const data = await plugin.builders.data.download({ url }, { state: { isGhost: true } });
+      const trajectory = await plugin.builders.structure.parseTrajectory(data, 'mmcif');
+      await plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
+    })();
+
+    return () => {
+      disposed = true;
+      plugin?.dispose();
+    };
+  }, [url]);
+
+  return (
+    <div ref={parentRef} style={{ position: 'relative', width: '100%', height: 600 }}>
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0 }} />
+    </div>
+  );
+
 }

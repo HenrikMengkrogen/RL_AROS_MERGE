@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useContext } from "react";
 import { IDesignContext, DesignContext } from '../designContext';
-import { LoadingIndicator, DesignOutput } from '../components'
+import { LoadingIndicator, DesignOutput, Viewer3d } from '../components'
+
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -19,6 +20,7 @@ export default function Page() {
     });
     //Loading indicator
     const [isDataLoading, setIsDataLoading] = useState(false);
+    const [receivedPDB, setReceivedPDB] = useState(false)
     
     const handleSubmit = useCallback(async () => {
         if (submit == 2) {
@@ -41,7 +43,6 @@ export default function Page() {
                 })
             }).then((res) =>
                 res.json().then((data) => {
-                    // Setting a data from api
                     setdata({
                         sequence: data.sequence,
                         original_exp_structure: data.original_exp_structure,
@@ -78,6 +79,7 @@ export default function Page() {
      <h1>Construct outputs</h1>
      {isDataLoading && <LoadingIndicator />}
      {!isDataLoading && submit !=2 && <DesignOutput response={response}/>}
+     <Viewer3d />
     </main>
     </div>
 

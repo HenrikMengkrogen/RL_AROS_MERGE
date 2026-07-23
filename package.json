@@ -2,6 +2,7 @@
   "name": "next-flask",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@11.18.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,6 +16,7 @@
     "autoprefixer": "10.4.14",
     "eslint": "8.40.0",
     "eslint-config-next": "13.4.2",
+    "molstar": "^5.10.1",
     "next": "^16.0.10",
     "postcss": "8.4.23",
     "react": "^19.2.1",

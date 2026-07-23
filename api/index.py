@@ -1,10 +1,11 @@
 from flask import Flask, jsonify
-from flask import request
+from flask import request, send_file
 import RNA
 import random
 import math
 import sqlite3
 import requests
+import io, os, shutil, tempfile
 
 app = Flask(__name__)
 
@@ -91,12 +92,14 @@ def python_route():
                 "original_exp_structure": res_structure,
                 "disp_structure": disp_structure,
                 "mfe": mfe})
+                #"pdb_content_bytes": pdb_content})
     else: 
         print("Type of request is not POST")
     
 
 
 from pyfurnace.generate.road import generate_road
+from pyfurnace import Origami
 
 def comp(seq): # This is just generate the complementary domains -> since the script went trough a couple of iterations there are some redundancy in some of the functions, but I will clean that up later
     transcribe_dict = {
@@ -104,7 +107,8 @@ def comp(seq): # This is just generate the complementary domains -> since the sc
         'U': 'A',
         'G': 'C',
         'C': 'G',
-        'X': 'X'
+        'X': 'X',
+        'K' : 'k'
     }
     rna_seq = ''
     for n in seq:
@@ -114,9 +118,11 @@ def comp(seq): # This is just generate the complementary domains -> since the sc
             rna_seq += n.swapcase()
     return rna_seq[::-1]
 
-def get_pair_map(structure):
+def get_pair_map(structure, sequence):
     pair_map = {}
     stack = []
+    comp_stack = []
+    current_comp_start = ''
     for i, c in enumerate(structure):
         if c == '(':
             stack.append(i)
@@ -124,6 +130,16 @@ def get_pair_map(structure):
             j = stack.pop()
             pair_map[i] = j
             pair_map[j] = i
+        if sequence[i] == 'k' or sequence[i] == 'K':
+            if current_comp_start == '':
+                current_comp_start = sequence[i]
+                comp_stack.append(i)
+            elif current_comp_start == sequence[i]:
+                comp_stack.append(i)
+            else:
+                j = comp_stack.pop()
+                pair_map[i] = j
+                pair_map[j] = i
 
     return pair_map
 
@@ -132,20 +148,18 @@ def get_pair_map(structure):
 def mutate_seq(seq_in, structure, wobble_frequency=0.05):
     comp_dict = {'A': 'U', 'U': 'A', 'G': 'C', 'C': 'G'}
     nucleotides = ['A', 'U', 'G', 'C']
-    pair_map = get_pair_map(structure)
+    pair_map = get_pair_map(structure, seq_in)
     mut_seq = list(seq_in)
 
     for i in range(len(mut_seq)):
-        if mut_seq[i] != 'N':
+        if mut_seq[i] != 'N' and mut_seq[i] != 'K' and mut_seq[i] != 'k':
             continue  
 
         if i in pair_map:
             j = pair_map[i]
-            if mut_seq[j] != 'N':
-                
+            if mut_seq[j] != 'N' and mut_seq[j] != 'K' and mut_seq[j] != 'k':
                 mut_seq[i] = comp_dict[mut_seq[j]]
-            else:
-                
+            else:       
                 choice = random.choice(nucleotides)
                 mut_seq[i] = choice
                 if random.random() > (1 - wobble_frequency) and mut_seq[i] == 'G': # Adds wobble basepairs with the specified frequency
@@ -177,7 +191,6 @@ def hill_climb_design(seq_in, structure, pair_map, n_positions, max_steps=10000,
 
     current = mutate_seq(seq_in, structure, wobble_frequency=wobble_frequency)  
     current_dist, current_ss, current_mfe = bp_distance_to_target(current, structure)
-
     
     best_candidates = [(current_dist, current, current_ss, current_mfe)]
 
@@ -206,7 +219,7 @@ def hill_climb_design(seq_in, structure, pair_map, n_positions, max_steps=10000,
         dist, ss, mfe = bp_distance_to_target(candidate, structure)
 
         
-        accept = dist <= current_dist or random.random() < math.exp(-(dist - current_dist) / max(temperature, 1e-6))
+        accept = dist <= current_dist  or random.random() < math.exp(-(dist - current_dist) / max(temperature, 1e-6))
 
         if accept:
             current = candidate
@@ -222,14 +235,13 @@ def hill_climb_design(seq_in, structure, pair_map, n_positions, max_steps=10000,
 
         temperature *= cooling_rate
         
-        if step % 500 == 0:
+        if step % 1000 == 0:
             print(f"step {step}: current_dist={current_dist}, best_dist={best_candidates[0][0]}, temp={temperature:.4f}")
-
     return best_candidates
 
 
 def multi_start_hill_climb(seq_in, structure, pair_map, n_positions,
-                             n_runs=1, max_steps=5000, wobble_frequency=0.05): 
+                             n_runs=6, max_steps=20000, wobble_frequency=0.05): 
     results = []
     for run in range(n_runs):
         pool = hill_climb_design(seq_in, structure, pair_map, n_positions,
@@ -245,7 +257,7 @@ def multi_start_hill_climb(seq_in, structure, pair_map, n_positions,
 
 
 def construct_design(domains):
-    miRNA_1 = domains[0] 
+    ''' miRNA_1 = domains[0] 
     miRNA_2 = domains[1]
     miRNA1_th = comp(miRNA_1[:1]) 
     # miRNA2_th = comp(miRNA_2[:1]) 
@@ -271,6 +283,7 @@ def construct_design(domains):
     algorithm_selector = 'Hill'
     print("0")
     
+    #Standard
     domain_order = (
         miRNA_1 + poly_c_domain + miRNA_2 + loop + comp(toehold) + comp(miRNA_2)
         + poly_u_domain + comp(miRNA_1) + 'N'*20 + middle_stem + spacer_2 + miRNA1_th
@@ -288,12 +301,42 @@ def construct_design(domains):
         + len(stem)*'(' + len(rbs_site)*'.' + len(stem)*')' + '.'*3 + len(spacer_3)*'.' + len(clamp)*')' + len(miRNA_1)*')' + len(poly_u_domain)*')' +
         '.'*3 + len(miRNA_1[:6])*'.' + len(clamp)*'.' + len(mrna)*'.'
     )
-        
+    '''
+    #Alternative
+
+    miRNA1 ="ACUCUUUCCCUGUUGCACUAC"
+
+    miRNA2 ="GCUCUGACGAGGUUGCACUACU"
+
+    RiboSwitch = "CUCGUUUAUCCCUGCAUACAGAAACAGAGGAGAUAUGCAAUGAUAAACGAGAACCUGGCG"
+
+    #Gen ="CGUAAAGGAGAAGAACUUUUCACUGGAGUUGUCCCAAUUCUUGUUGAAUUAGAUGGUGAUGUUAAUGGGCACAAAUUUUCUGUCAGUGGAGAGGGUGAAGGUGAUGCAACAUACGGAAAACUUACCCUUAAAUUUAUUUGCACUACUGGAAAACUACCUGUUCCAUGGCCAACACUUGUCACUACUUUCGGUUAUGGUGUUCAAUGCUUUGCGAGAUACCCAGAUCAUAUGAAACAGCAUGACUUUUUCAAGAGUGCCAUGCCCGAAGGUUAUGUACAGGAAAGAACUAUAUUUUUCAAAGAUGACGGGAACUACAAGACACGUGCUGAAGUCAAGUUUGAAGGUGAUACCCUUGUUAAUAGAAUCGAGUUAAAAGGUAUUGAUUUUAAAGAAGAUGGAAACAUUCUUGGACACAAAUUGGAAUACAACUAUAACUCACACAAUGUAUACAUCAUGGCAGACAAACAAAAGAAUGGAAUCAAAGUUAACUUCAAAAUUAGACACAACAUUGAAGAUGGAAGCGUUCAACUAGCAGACCAUUAUCAACAAAAUACUCCAAUUGGCGAUGGCCCUGUCCUUUUACCAGACAACCAUUACCUGUCCACACAAUCUGCCCUUUCGAAAGAUCCCAACGAAAAGAGAGAuCACAUGGUCCUUCUUGAGUUUGUAACAGCUGCUGGGAUUACACAUGGCAUGGAUGAACUAUACAAAUAA"
+
+    Toehold = 'N' *10
+
+    Toehold2 = 'K' * 10
+
+    algorithm_selector = 'Hill'
+ 
+    domain_order = (miRNA1[7:] + comp(RiboSwitch[:15]) + comp(Toehold2) + RiboSwitch[7:15] + comp(miRNA1[7:]) + Toehold 
+                    + comp(miRNA2[7:]) + comp(miRNA2[:7]) + comp(miRNA1[7:]) + comp(miRNA1[:7]) + Toehold2 + RiboSwitch 
+                    )#+ Gen)
+
+    structure_map = ( '(' * len(miRNA1[7:] + comp(RiboSwitch[7:15])) + '.' * len( RiboSwitch[:7] + comp(Toehold2)) + 
+                     ')' * len(RiboSwitch[7:15] + comp(miRNA1[7:])) + '.' * len(Toehold 
+                    + comp(miRNA2[7:]) + comp(miRNA2[:7]) + comp(miRNA1[7:]) + comp(miRNA1[:7]) + Toehold2)
+                    + '(' * 9 + '.' * 3 + '(' * 6 + '.' * 15 + ')' * 6 + '.' * 3 + ')' * 9 + '.' * 9 #RiboSwitch internal pairings
+                    )# +'.' *len(Gen)) 
     
+        
     
 
     if len(domain_order) != len(structure_map):
         print('Error: domain order and structure map are not the same length')
+        print(len(RiboSwitch))
+        print(len('(' * 9 + '.' * 3 + '(' * 6 + '.' * 15 + ')' * 6 + '.' * 3 + ')' * 9))
+
+    '''
     displaced_strand = (miRNA_1 + poly_a_domain + miRNA_2 + toehold).upper()
     print(structure_map)
     displaced_strand = (miRNA_1 + poly_a_domain + miRNA_2 + toehold).upper()
@@ -319,10 +362,30 @@ def construct_design(domains):
         print("Structure:", structure)
         print("MFE      :", mfe, "kcal/mol")
         return [sequence, structure_map, structure, mfe]
-
+    '''
     if algorithm_selector == 'Hill':
-        results = multi_start_hill_climb(domain_order, structure_map, get_pair_map(structure_map), [i for i, x in enumerate(domain_order) if x == "N"])
-        print(results)
-        best_result = min(results, key=lambda x: x[0])
+        results = multi_start_hill_climb(domain_order, structure_map, get_pair_map(structure_map, domain_order), [i for i, x in enumerate(domain_order) if x == "N" or x == "K" or x == "k"])
+        best_result = min(results, key=lambda x: x[3])
+        for res in results:
+            print(res)
+            Toehold = res[1][61:71] #Make it more robust
+            key_strand = (comp(Toehold) + miRNA1[7:] + comp(RiboSwitch[7:15]) + miRNA2[7:])
+            print(key_strand)
+            test_seqs = f"{key_strand}&{res[1]}"
+            fc = RNA.fold_compound(test_seqs)
+            structure, mfe = fc.mfe()
+            print(structure)
+            print(mfe)
+
+        origami = Origami.from_structure(sequence=best_result[1], structure=best_result[2])
+
+        with tempfile.TemporaryDirectory() as tmp:
+            base = os.path.join(tmp, "design")
+            print(base)
+            origami.save_3d_model(base, pdb=True)       
+            with open(base + ".pdb", "rb") as f:
+                pdb_bytes = f.read()
+        
+
         return [best_result[1], structure_map, best_result[2], best_result[3]]
 
