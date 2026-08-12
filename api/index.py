@@ -6,6 +6,9 @@ import math
 import sqlite3
 import requests
 import io, os, shutil, tempfile
+from flask import send_from_directory
+from flask import abort
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
 
@@ -241,7 +244,7 @@ def hill_climb_design(seq_in, structure, pair_map, n_positions, max_steps=10000,
 
 
 def multi_start_hill_climb(seq_in, structure, pair_map, n_positions,
-                             n_runs=6, max_steps=20000, wobble_frequency=0.05): 
+                             n_runs=1, max_steps=500, wobble_frequency=0.05): 
     results = []
     for run in range(n_runs):
         pool = hill_climb_design(seq_in, structure, pair_map, n_positions,
@@ -304,20 +307,37 @@ def construct_design(domains):
     '''
     #Alternative
 
-    miRNA1 ="ACUCUUUCCCUGUUGCACUAC"
+    #Cancer miRNAs
+    miRNA1 = "GCUCUGACGAGGUUGCACUACU"
 
-    miRNA2 ="GCUCUGACGAGGUUGCACUACU"
+    miRNA2 = "ACUCUUUCCCUGUUGCACUAC"
+
+    #HIV miRNAs
+    '''miRNA1 = "UAGGUAGUUUCCUGUUGUUGGG"
+    
+    miRNA2 = "UGGAUUUUUGGAUCAGGGA"
+    '''
+
+
+    miRNA3 = "UUUGGCAAUGGUAGAACUCACACU"
+
+    miRNA4 = "UGUGCAAAUCCAUGCAAAACUGA"
+    miRNA4 = ""
 
     RiboSwitch = "CUCGUUUAUCCCUGCAUACAGAAACAGAGGAGAUAUGCAAUGAUAAACGAGAACCUGGCG"
 
     #Gen ="CGUAAAGGAGAAGAACUUUUCACUGGAGUUGUCCCAAUUCUUGUUGAAUUAGAUGGUGAUGUUAAUGGGCACAAAUUUUCUGUCAGUGGAGAGGGUGAAGGUGAUGCAACAUACGGAAAACUUACCCUUAAAUUUAUUUGCACUACUGGAAAACUACCUGUUCCAUGGCCAACACUUGUCACUACUUUCGGUUAUGGUGUUCAAUGCUUUGCGAGAUACCCAGAUCAUAUGAAACAGCAUGACUUUUUCAAGAGUGCCAUGCCCGAAGGUUAUGUACAGGAAAGAACUAUAUUUUUCAAAGAUGACGGGAACUACAAGACACGUGCUGAAGUCAAGUUUGAAGGUGAUACCCUUGUUAAUAGAAUCGAGUUAAAAGGUAUUGAUUUUAAAGAAGAUGGAAACAUUCUUGGACACAAAUUGGAAUACAACUAUAACUCACACAAUGUAUACAUCAUGGCAGACAAACAAAAGAAUGGAAUCAAAGUUAACUUCAAAAUUAGACACAACAUUGAAGAUGGAAGCGUUCAACUAGCAGACCAUUAUCAACAAAAUACUCCAAUUGGCGAUGGCCCUGUCCUUUUACCAGACAACCAUUACCUGUCCACACAAUCUGCCCUUUCGAAAGAUCCCAACGAAAAGAGAGAuCACAUGGUCCUUCUUGAGUUUGUAACAGCUGCUGGGAUUACACAUGGCAUGGAUGAACUAUACAAAUAA"
 
-    Toehold = 'N' *10
+    Toehold = 'K' *10
 
-    Toehold2 = 'K' * 10
+    #Toehold2 = 'K' * 10
+
+    loop7 = "N" * 7
 
     algorithm_selector = 'Hill'
- 
+
+    '''
+    #Linnea 1
     domain_order = (miRNA1[7:] + comp(RiboSwitch[:15]) + comp(Toehold2) + RiboSwitch[7:15] + comp(miRNA1[7:]) + Toehold 
                     + comp(miRNA2[7:]) + comp(miRNA2[:7]) + comp(miRNA1[7:]) + comp(miRNA1[:7]) + Toehold2 + RiboSwitch 
                     )#+ Gen)
@@ -327,14 +347,42 @@ def construct_design(domains):
                     + comp(miRNA2[7:]) + comp(miRNA2[:7]) + comp(miRNA1[7:]) + comp(miRNA1[:7]) + Toehold2)
                     + '(' * 9 + '.' * 3 + '(' * 6 + '.' * 15 + ')' * 6 + '.' * 3 + ')' * 9 + '.' * 9 #RiboSwitch internal pairings
                     )# +'.' *len(Gen)) 
-    
         
+    '''
+    #Linnea 2
+    domain_order = (comp(miRNA1) + comp(miRNA2) + comp(miRNA3) + comp(miRNA4) + Toehold + RiboSwitch) #Without key strand
+
+    structure_map = ('(' * len(miRNA2[7:]) + '.' * 7 + '(' * len(miRNA1[7:]) + '.' * len(comp(Toehold) + comp(RiboSwitch[:15])) +  #Key strand structure
+                     ')' * len(comp(miRNA1[7:])) + '.' * len(comp(miRNA1[:7])) + ')' * len(comp(miRNA2[7:]))  + '.' * len(comp(miRNA2[:7]))) #Main strand base
+
+    #TODO Generalize
+    #Adding the variable parts depending on the number of input miRNAs
+    key_strand = (miRNA2[7:] + loop7 + miRNA1[7:] + comp(RiboSwitch[:15]) + comp(Toehold))
+    if miRNA3 != "":
+        key_strand = (miRNA3[7:] + loop7) + key_strand
+        structure_map = ('(' * len(miRNA3[7:]) + '.' * 7) + structure_map
+        structure_map +=  ')' * len(comp(miRNA3[7:])) + '.' * len(comp(miRNA3[:7]))
+
+    if miRNA4 != "":
+            key_strand = (miRNA4[7:] + loop7) + key_strand
+            structure_map = ('(' * len(miRNA4[7:]) + '.' * 7) + structure_map
+            structure_map +=  ')' * len(comp(miRNA4[7:])) + '.' * len(comp(miRNA4[:7]))
     
+
+    structure_map += ('.' * len(Toehold) +
+                     '(' * 9 + '.' * 3 + '(' * 6 + '.' * 15 + ')' * 6 + '.' * 3 + ')' * 9 + '.' * 9) #Riboswitch internal structure
+
+    key_length = len(key_strand)
+
+    domain_order = key_strand + domain_order  #Added key strand
+
+    
+
 
     if len(domain_order) != len(structure_map):
         print('Error: domain order and structure map are not the same length')
-        print(len(RiboSwitch))
-        print(len('(' * 9 + '.' * 3 + '(' * 6 + '.' * 15 + ')' * 6 + '.' * 3 + ')' * 9))
+        print(domain_order)
+        print(structure_map)
 
     '''
     displaced_strand = (miRNA_1 + poly_a_domain + miRNA_2 + toehold).upper()
@@ -366,9 +414,22 @@ def construct_design(domains):
     if algorithm_selector == 'Hill':
         results = multi_start_hill_climb(domain_order, structure_map, get_pair_map(structure_map, domain_order), [i for i, x in enumerate(domain_order) if x == "N" or x == "K" or x == "k"])
         best_result = min(results, key=lambda x: x[3])
+        print(structure_map)
+        with open("../data/run15.txt", "w") as f:
+            for res in results:
+                 f.write(str(res))
+                 f.write("\n")
+                 f.write("Key strand: " +res[1][:key_length])
+                 f.write("\n")
+                 f.write("Main strand: " +res[1][key_length:])
+                 f.write("\n")
+                 f.write("\n")
+        ''' Linnea 1
         for res in results:
             print(res)
-            Toehold = res[1][61:71] #Make it more robust
+            toehold_start_idx = len(miRNA1[7:] + comp(RiboSwitch[:15]) + comp(Toehold2) + RiboSwitch[7:15] + comp(miRNA1[7:]))
+            print(toehold_start_idx)
+            Toehold = res[1][toehold_start_idx:(toehold_start_idx + 10)] #Make it more robust
             key_strand = (comp(Toehold) + miRNA1[7:] + comp(RiboSwitch[7:15]) + miRNA2[7:])
             print(key_strand)
             test_seqs = f"{key_strand}&{res[1]}"
@@ -376,16 +437,64 @@ def construct_design(domains):
             structure, mfe = fc.mfe()
             print(structure)
             print(mfe)
-
-        origami = Origami.from_structure(sequence=best_result[1], structure=best_result[2])
-
-        with tempfile.TemporaryDirectory() as tmp:
-            base = os.path.join(tmp, "design")
-            print(base)
-            origami.save_3d_model(base, pdb=True)       
-            with open(base + ".pdb", "rb") as f:
-                pdb_bytes = f.read()
+        '''
+       
         
 
         return [best_result[1], structure_map, best_result[2], best_result[3]]
 
+
+@app.route("/pdb", methods=['POST'])
+def pdb_file():
+    import pyfurnace as pf
+    req_data = request.get_json()
+    sequence = req_data['seq']
+    structure = req_data['structure']
+    print("Got " + sequence)
+    print("Got " + structure)
+    origami = Origami.from_structure(sequence=sequence, structure=structure)
+
+    #Motif parser
+    origami_motif_build = pf.Origami()
+    current_line = [pf.Dovetail(0, up_cross=False)]
+    for i, line in enumerate(origami):
+        for j, motif in enumerate(line):
+            #Stem
+            if isinstance(motif, pf.Stem):
+                current_line.append(motif)
+            
+            elif len(motif.sequence) != 0:
+                #Other stuff
+                #Loop "╮│╯"
+                if len(origami._matrix[i][j + 1]) != 2:
+                    clean_seq = "".join(c for c in origami._matrix[i][j][0].sequence if c in "ACGUNKMRSWYBDHVX&") 
+                    loop = pf.Loop(open_left=True, sequence=clean_seq)
+                    current_line.append(loop)
+                #Single strand
+                else:
+                    current_line.append(pf.single_strand(sequence=origami._matrix[i][j].sequence))
+        print(current_line)
+        origami_motif_build.append(current_line)
+        current_line.clear()
+        current_line = [pf.Dovetail(0, down_cross=False)]
+
+
+
+    '''origami2 = pf.Origami([pf.Stem(sequence=sequence[:17]), pf.single_strand(sequence[17:24]),
+    pf.Stem(sequence=sequence[24:38]), pf.single_strand(sequence[38:45]), pf.Stem(sequence=sequence[45:60]), pf.Loop(open_left=True,sequence=sequence[60:85])])
+    '''
+    print(origami)
+    print(origami_motif_build)
+    origami = origami_motif_build
+    path = "../data/pdb/" + str(random.random())[2:]
+    origami.save_3d_model(path, pdb=True)
+    return jsonify({"path": path[2:]})
+
+@app.route('/data/pdb/<path:filename>', methods=['GET'])
+@cross_origin()
+def serve_pdb(filename):
+    PDB_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'pdb'))
+    try:    
+        return send_from_directory(PDB_DIR, filename, mimetype='chemical/x-pdb', as_attachment=True, download_name='structure.pdb')
+    except FileNotFoundError:
+        abort(404)

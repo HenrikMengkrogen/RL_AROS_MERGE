@@ -249,41 +249,64 @@ export function DesignOutput(response : any) {
 export function Viewer3d({ url = 'https://files.rcsb.org/download/1CRN.cif' }) {
   const parentRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pluginRef = useRef<PluginContext | null>(null);
+  const [ready, setReady] = useState(false);
 
+  // 1) One-time init. Empty deps → runs once for the component's life.
   useEffect(() => {
-
     const canvas = canvasRef.current;
     const parent = parentRef.current;
     if (!canvas || !parent) return;
 
     let disposed = false;
-    let plugin = new PluginContext(DefaultPluginSpec());
-    
+    const plugin = new PluginContext(DefaultPluginSpec());
+
     (async () => {
       await plugin.init();
-
       if (disposed) { plugin.dispose(); return; }
-      const ok = await plugin.initViewerAsync(canvas, parent);
-      if (!ok) {
-        console.error('Failed to init Mol* viewer');
-          return;
-      }
 
-      const data = await plugin.builders.data.download({ url }, { state: { isGhost: true } });
-      const trajectory = await plugin.builders.structure.parseTrajectory(data, 'mmcif');
-      await plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
+      const ok = await plugin.initViewerAsync(canvas, parent);
+      if (disposed) { plugin.dispose(); return; }
+      if (!ok) { console.error('Failed to init Mol* viewer'); return; }
+
+      pluginRef.current = plugin;
+      setReady(true);
     })();
 
     return () => {
       disposed = true;
-      plugin?.dispose();
+      plugin.dispose();
+      pluginRef.current = null;
     };
-  }, [url]);
+  }, []);
+
+  // 2) Load structure whenever url changes (or once ready). No re-init.
+  useEffect(() => {
+    const plugin = pluginRef.current;
+    if (!ready || !plugin) return;
+
+    let cancelled = false;
+    (async () => {
+      await plugin.clear(); // remove previous structure before loading the new one
+      if (cancelled) return;
+
+      const data = await plugin.builders.data.download({ url }, { state: { isGhost: true } });
+      if (cancelled) return;
+      const format = url.endsWith('.cif') ? 'mmcif' : 'pdb';
+      const trajectory = await plugin.builders.structure.parseTrajectory(data, format);
+      if (cancelled) return;
+      await plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
+    })();
+
+    return () => { cancelled = true; };
+  }, [url, ready]);
 
   return (
-    <div ref={parentRef} style={{ position: 'relative', width: '100%', height: 600 }}>
-      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0 }} />
+    <div
+    ref={parentRef}
+    style={{ position: 'relative', width: '100%', height: '600px', overflow: 'hidden' }}
+    >
+    <canvas ref={canvasRef} style={{ display: 'block' }} />
     </div>
   );
-
 }

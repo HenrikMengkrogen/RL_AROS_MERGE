@@ -3,15 +3,18 @@
 import { useState, useEffect, useCallback, useContext } from "react";
 import { IDesignContext, DesignContext } from '../designContext';
 import { LoadingIndicator, DesignOutput, Viewer3d } from '../components'
+import { Sequence } from "molstar/lib/mol-model/sequence";
+import { blob } from "stream/consumers";
 
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export default function Page() {
    //Read context
-    const idesignContext: IDesignContext = useContext(DesignContext);
+   const idesignContext: IDesignContext = useContext(DesignContext);
    //output declarations
    const [submit, setSubmit] = useState(2)
+   const [pdb_link, setPdb_link] = useState("")
    const [response, setdata] = useState({
         sequence: "",
         original_exp_structure: "",
@@ -49,11 +52,20 @@ export default function Page() {
                         disp_structure: data.disp_structure,
                         mfe: data.mfe
                     });
+                    fetch(BACKEND_URL + "/pdb", {
+                    method: "POST",
+                    headers: { "Content-type": "application/json"},
+                    //Match inputs here
+                    body: JSON.stringify({
+                    seq: data.sequence,
+                    structure: data.original_exp_structure
                 })
-            )
-
+            }).then((res) => res.json().then((pdb_data) => setPdb_link(BACKEND_URL + pdb_data.path + ".pdb")))
+                })
+            );
             setIsDataLoading(false);
-}}, [submit])
+            
+}} , [submit])
 
   useEffect(() => {handleSubmit()}, [handleSubmit]);
 
@@ -79,7 +91,8 @@ export default function Page() {
      <h1>Construct outputs</h1>
      {isDataLoading && <LoadingIndicator />}
      {!isDataLoading && submit !=2 && <DesignOutput response={response}/>}
-     <Viewer3d />
+     <div className="h-50 max-h-50"></div>
+     {!isDataLoading && (pdb_link != "") && submit !=2 && <Viewer3d url={pdb_link} />}
     </main>
     </div>
 
