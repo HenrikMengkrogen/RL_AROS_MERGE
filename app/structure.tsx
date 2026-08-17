@@ -7,7 +7,7 @@ import img from '../public/logo.svg'
 
 function NavButton({ label }: { label: string }) {
   return (
-      <Link href={(label == "Home") ? "/" : `/${label}`.split(" ")[0].toLowerCase()} className="flex w-full justify-center rounded-full bg-foreground py-8 mx-4 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]">
+      <Link href={(label == "Home") ? "/" : `/${label}`.split(" ")[0].toLowerCase()} className="flex w-full justify-center rounded-full bg-foreground py-5 mx-4 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]">
 
       <p>{label}</p>
       </Link>
@@ -28,6 +28,7 @@ export function Header() {
         />
       </div>
       <NavButton label="Home" />
+      <NavButton label="Target" />
       <NavButton label="miRNA inputs" />
       <NavButton label="Logic gates" />
       <NavButton label="Protein output" />

@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask import request, send_file
+import pandas as pd
 import RNA
 import random
 import math
@@ -498,3 +499,13 @@ def serve_pdb(filename):
         return send_from_directory(PDB_DIR, filename, mimetype='chemical/x-pdb', as_attachment=True, download_name='structure.pdb')
     except FileNotFoundError:
         abort(404)
+
+
+@app.route("/target", methods=['GET'])
+def target_disease():
+    query = request.args.get('query')
+    df = pd.read_excel('../data/HMDD.xlsx')
+    diease_assoc_rows = df.loc[df['disease'] == query]
+    miRNAs = diease_assoc_rows['miRNA'].tolist()
+    descriptions = diease_assoc_rows['description'].tolist()
+    return jsonify({"results": miRNAs, "descriptions": descriptions})

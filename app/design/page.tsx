@@ -84,8 +84,7 @@ export default function Page() {
     }
 
   return (
-    <div className='flex flex-row'>
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex min-h-screen flex-col items-center justify-around p-10">
     <button onClick={handleDemo1} className="py-4 px-4 rounded-full transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]">Demo data 1</button>
     <button onClick={handleButtonSubmit} className="py-4 px-4 rounded-full transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]">Construct the design!</button>
      <h1>Construct outputs</h1>
@@ -94,7 +93,6 @@ export default function Page() {
      <div className="h-50 max-h-50"></div>
      {!isDataLoading && (pdb_link != "") && submit !=2 && <Viewer3d url={pdb_link} />}
     </main>
-    </div>
 
   )
 }

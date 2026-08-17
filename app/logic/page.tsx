@@ -1,5 +1,5 @@
 export default function Page() {
-  return (<main className="flex w-full min-h-screen flex-col items-center justify-between p-24">
+  return (<main className="flex w-full min-h-screen flex-col items-center justify-around p-10">
     <h1>Logic Page</h1>
     <div className="flex flex-grow w-full flex-row justify-around p-10">
       <div className="flex flex-grow flex-col p-10 justify-around">

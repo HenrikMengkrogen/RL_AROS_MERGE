@@ -8,7 +8,7 @@ export default function Page() {
   
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex min-h-screen flex-col items-center justify-around p-10">
       <h1>miRNA Page</h1>
       <MiRNAInputField index={0} />
         <hr />

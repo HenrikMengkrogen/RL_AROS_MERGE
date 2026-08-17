@@ -6,6 +6,7 @@ import img from '../public/logo.svg'
 
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { DefaultPluginSpec } from 'molstar/lib/mol-plugin/spec';
+import { list } from 'postcss';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -229,9 +230,6 @@ export function LoadingIndicator() {
 
 
 export function DesignOutput(response : any) {
-  console.log(response)
-  console.log(response.response)
-  console.log(response.response.sequence)
   return (
     <>
     <h2>Designed sequence: </h2>
@@ -309,4 +307,39 @@ export function Viewer3d({ url = 'https://files.rcsb.org/download/1CRN.cif' }) {
     <canvas ref={canvasRef} style={{ display: 'block' }} />
     </div>
   );
+}
+
+export function MiRNATable(response : {miRNAList : string[] , description : string[]}) {
+  const miRNAList = response.miRNAList
+  const description = response.description
+
+  const rows = [];
+  for (let i = 0; i < miRNAList.length; i++) {
+    rows.push(
+      <tr key={i}>
+        <th scope='row' className='border border-gray-300'>
+          {miRNAList[i]}
+        </th>
+        <td className='border border-gray-300'>{description[i]}</td>
+      </tr>
+    )
+  }
+ return(
+  <div className='flex h-80 overflow-y-auto'>
+  <table className=' border-separate border border-gray-500 '>
+    <caption>
+      Disease associated miRNAs returned from HMDD.
+    </caption>
+    <thead>
+    <tr>
+      <th scope="col" className='border border-gray-300 bg-[#ccc]'>miRNA name</th>
+      <th scope="col" className='border border-gray-300 bg-[#ccc]'>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    {rows}
+  </tbody>
+  </table>
+  </div>
+ );
 }
