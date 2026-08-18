@@ -111,8 +111,7 @@ def comp(seq): # This is just generate the complementary domains -> since the sc
         'U': 'A',
         'G': 'C',
         'C': 'G',
-        'X': 'X',
-        'K' : 'k'
+        'X': 'X'
     }
     rna_seq = ''
     for n in seq:
@@ -147,11 +146,41 @@ def get_pair_map(structure, sequence):
 
     return pair_map
 
-
+def get_named_domains(sequence):
+    sequence = list(sequence)
+    characters = ['A', 'U', 'G', 'C', 'N', 'K', 'k']
+    in_region = False
+    region_start = 0
+    named_domains = {}
+    for i, n in enumerate(sequence):
+        if n in characters and not in_region:
+            continue
+        elif n in characters and in_region and sequence[i-1] in named_domains.keys():
+            named_domains[sequence[i-1]].append([region_start, i-1]) #Append to existing
+            sequence[i-1] = 'N'
+            print(named_domains)
+            in_region = False
+        elif n in characters and in_region and not (sequence[i-1] in named_domains.keys()):
+            named_domains[sequence[i-1]] = [[region_start, i-1]]
+            print(named_domains)
+            sequence[i-1] = 'N'
+            in_region = False
+        elif not (n in characters) and not in_region:
+            in_region = True
+            region_start = i
+        else:
+             sequence[i-1] = 'N'
+    if in_region:
+        if sequence[i] in named_domains.keys():
+            named_domains[sequence[i]].append([region_start, i]) #Append to existing
+        else:
+            named_domains[sequence[i]] = [[region_start, i]]
+    return named_domains
 
 def mutate_seq(seq_in, structure, wobble_frequency=0.05):
     comp_dict = {'A': 'U', 'U': 'A', 'G': 'C', 'C': 'G'}
     nucleotides = ['A', 'U', 'G', 'C']
+    named_domain_map = get_named_domains(seq_in)
     pair_map = get_pair_map(structure, seq_in)
     mut_seq = list(seq_in)
 
@@ -175,7 +204,7 @@ def mutate_seq(seq_in, structure, wobble_frequency=0.05):
             
             mut_seq[i] = random.choice(nucleotides)
 
-    return ''.join(mut_seq)
+    return ''.join(mut_seq), named_domain_map
 
 
 def bp_distance_to_target(seq, target_structure):
@@ -189,17 +218,18 @@ def bp_distance_to_target(seq, target_structure):
 
 
 
-def hill_climb_design(seq_in, structure, pair_map, n_positions, max_steps=10000,
+def hill_climb_design(seq_in, structure, max_steps=10000,
                        n_keep=5, temperature=1.0, cooling_rate=0.999, wobble_frequency=0.05): 
     comp_dict = {'A': 'U', 'U': 'A', 'G': 'C', 'C': 'G'}
-
-    current = mutate_seq(seq_in, structure, wobble_frequency=wobble_frequency)  
+    pair_map = get_pair_map(structure, seq_in)
+    n_positions = [i for i, x in enumerate(seq_in) if not(x in comp_dict)]
+    print(n_positions)
+    current, named_domains = mutate_seq(seq_in, structure, wobble_frequency=wobble_frequency)
     current_dist, current_ss, current_mfe = bp_distance_to_target(current, structure)
-    
+    print(named_domains)
     best_candidates = [(current_dist, current, current_ss, current_mfe)]
 
     print(seq_in + "\n")
-    print(n_positions)
 
     for step in range(max_steps):
         if best_candidates[0][0] == 0 and len(best_candidates) >= n_keep: # remove and len(best_candidates) >= n_keep to let the function iterate all 20 000 times
@@ -208,16 +238,27 @@ def hill_climb_design(seq_in, structure, pair_map, n_positions, max_steps=10000,
         i = random.choice(n_positions)
         candidate = list(current)
 
+        choice = random.choice(['A', 'U', 'G', 'C'])
+        candidate[i] = choice
         if i in pair_map:
             j = pair_map[i]
-            choice = random.choice(['A', 'U', 'G', 'C'])
-            candidate[i] = choice
             if random.random() > (1 - wobble_frequency) and choice == 'G': # Adds wobble basepairs with the specified frequency
                 candidate[j] = 'U'
             else:
                 candidate[j] = comp_dict[choice]
-        else:
-            candidate[i] = random.choice(['A', 'U', 'G', 'C'])
+        #If in the named domains
+        for name in named_domains.keys():
+            for region in named_domains[name]:
+                '''if i < region[0]:
+                    break
+                '''
+                if region[0] <= i <= region[1]:
+                    for reg in named_domains[name]:
+                        candidate[reg[0] + i - region[0]] = choice
+                    if name.swapcase() in named_domains.keys():
+                        for reg in named_domains[name.swapcase()]:
+                            candidate[reg[1] - i + region[0]] = comp_dict[choice]
+                    break
 
         candidate = ''.join(candidate)
         dist, ss, mfe = bp_distance_to_target(candidate, structure)
@@ -244,11 +285,11 @@ def hill_climb_design(seq_in, structure, pair_map, n_positions, max_steps=10000,
     return best_candidates
 
 
-def multi_start_hill_climb(seq_in, structure, pair_map, n_positions,
-                             n_runs=1, max_steps=500, wobble_frequency=0.05): 
+def multi_start_hill_climb(seq_in, structure,
+                             n_runs=4, max_steps=2500, wobble_frequency=0.05): 
     results = []
     for run in range(n_runs):
-        pool = hill_climb_design(seq_in, structure, pair_map, n_positions,
+        pool = hill_climb_design(seq_in, structure,
                                   max_steps=max_steps, n_keep=1, wobble_frequency = wobble_frequency)
         results.append(pool[0])
         print(f"Run {run}: best_dist={pool[0][0]}")
@@ -307,17 +348,17 @@ def construct_design(domains):
     )
     '''
     #Alternative
-
+    '''
     #Cancer miRNAs
     miRNA1 = "GCUCUGACGAGGUUGCACUACU"
 
     miRNA2 = "ACUCUUUCCCUGUUGCACUAC"
 
     #HIV miRNAs
-    '''miRNA1 = "UAGGUAGUUUCCUGUUGUUGGG"
+    miRNA1 = "UAGGUAGUUUCCUGUUGUUGGG"
     
     miRNA2 = "UGGAUUUUUGGAUCAGGGA"
-    '''
+    
 
 
     miRNA3 = "UUUGGCAAUGGUAGAACUCACACU"
@@ -326,6 +367,11 @@ def construct_design(domains):
     miRNA4 = ""
 
     RiboSwitch = "CUCGUUUAUCCCUGCAUACAGAAACAGAGGAGAUAUGCAAUGAUAAACGAGAACCUGGCG"
+    '''
+    #RL3
+    miRNA1 = "UAGCUUAUCAGACUGAUGUUGACU"
+    miRNA2 = "UGGAGUGUGACAAUGGUGUUUG"
+    RiboSwitch = "UUUUCCAUCAAGAACAGGCCACCAUGGAAAA"
 
     #Gen ="CGUAAAGGAGAAGAACUUUUCACUGGAGUUGUCCCAAUUCUUGUUGAAUUAGAUGGUGAUGUUAAUGGGCACAAAUUUUCUGUCAGUGGAGAGGGUGAAGGUGAUGCAACAUACGGAAAACUUACCCUUAAAUUUAUUUGCACUACUGGAAAACUACCUGUUCCAUGGCCAACACUUGUCACUACUUUCGGUUAUGGUGUUCAAUGCUUUGCGAGAUACCCAGAUCAUAUGAAACAGCAUGACUUUUUCAAGAGUGCCAUGCCCGAAGGUUAUGUACAGGAAAGAACUAUAUUUUUCAAAGAUGACGGGAACUACAAGACACGUGCUGAAGUCAAGUUUGAAGGUGAUACCCUUGUUAAUAGAAUCGAGUUAAAAGGUAUUGAUUUUAAAGAAGAUGGAAACAUUCUUGGACACAAAUUGGAAUACAACUAUAACUCACACAAUGUAUACAUCAUGGCAGACAAACAAAAGAAUGGAAUCAAAGUUAACUUCAAAAUUAGACACAACAUUGAAGAUGGAAGCGUUCAACUAGCAGACCAUUAUCAACAAAAUACUCCAAUUGGCGAUGGCCCUGUCCUUUUACCAGACAACCAUUACCUGUCCACACAAUCUGCCCUUUCGAAAGAUCCCAACGAAAAGAGAGAuCACAUGGUCCUUCUUGAGUUUGUAACAGCUGCUGGGAUUACACAUGGCAUGGAUGAACUAUACAAAUAA"
 
@@ -349,6 +395,7 @@ def construct_design(domains):
                     + '(' * 9 + '.' * 3 + '(' * 6 + '.' * 15 + ')' * 6 + '.' * 3 + ')' * 9 + '.' * 9 #RiboSwitch internal pairings
                     )# +'.' *len(Gen)) 
         
+    '''
     '''
     #Linnea 2
     domain_order = (comp(miRNA1) + comp(miRNA2) + comp(miRNA3) + comp(miRNA4) + Toehold + RiboSwitch) #Without key strand
@@ -384,6 +431,16 @@ def construct_design(domains):
         print('Error: domain order and structure map are not the same length')
         print(domain_order)
         print(structure_map)
+    '''
+    #RL3
+    RiboSwitchDisplace = "R" *10
+    domain_order = (comp(miRNA1) + comp(miRNA2) + comp(RiboSwitchDisplace) + comp(Toehold) + miRNA2[7:]
+                    + loop7 + miRNA1[7:] + Toehold + RiboSwitchDisplace + RiboSwitch + comp(RiboSwitchDisplace))
+
+    structure_map = ('(' *len(comp(miRNA1)[7:]) + '.' *len(comp(miRNA1)[:7]) + '(' *len(comp(miRNA2)[7:]) + '.' *len(comp(miRNA2)[:7]) + '.' * len((comp(RiboSwitchDisplace) + comp(Toehold))) + ')' * len(miRNA2[7:]) + 
+                     '.' * len(loop7) + ')' * len(miRNA1[7:]) + '.' * len(Toehold) + '(' * len(RiboSwitchDisplace) + '.' * len(RiboSwitch) + ')' * len(comp(RiboSwitchDisplace)))
+
+
 
     '''
     displaced_strand = (miRNA_1 + poly_a_domain + miRNA_2 + toehold).upper()
@@ -413,6 +470,17 @@ def construct_design(domains):
         return [sequence, structure_map, structure, mfe]
     '''
     if algorithm_selector == 'Hill':
+            results = multi_start_hill_climb(domain_order, structure_map)
+            best_result = min(results, key=lambda x: x[3])
+            print(structure_map)
+            with open("../data/run18.txt", "w") as f:
+                for res in results:
+                     f.write(str(res))
+                     f.write("\n")
+                     f.write("Main strand: " +res[1])
+                     f.write("\n")
+                     f.write("\n")
+    '''if algorithm_selector == 'Hill':
         results = multi_start_hill_climb(domain_order, structure_map, get_pair_map(structure_map, domain_order), [i for i, x in enumerate(domain_order) if x == "N" or x == "K" or x == "k"])
         best_result = min(results, key=lambda x: x[3])
         print(structure_map)
@@ -425,7 +493,7 @@ def construct_design(domains):
                  f.write("Main strand: " +res[1][key_length:])
                  f.write("\n")
                  f.write("\n")
-        ''' Linnea 1
+        '''''' Linnea 1
         for res in results:
             print(res)
             toehold_start_idx = len(miRNA1[7:] + comp(RiboSwitch[:15]) + comp(Toehold2) + RiboSwitch[7:15] + comp(miRNA1[7:]))
@@ -442,7 +510,7 @@ def construct_design(domains):
        
         
 
-        return [best_result[1], structure_map, best_result[2], best_result[3]]
+    return [best_result[1], structure_map, best_result[2], best_result[3]]
 
 
 @app.route("/pdb", methods=['POST'])
