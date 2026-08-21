@@ -1,7 +1,9 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
 import {Header} from "./structure"
-import {DesignProvider } from './designContext';
+import {DesignProvider} from './designContext';
+import {ModeProvider} from './modeContext';
+import {AdvancedProvider} from './advancedContext';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,10 +22,14 @@ export default function RootLayout({
       <body className={inter.className}>
         <DesignProvider>
         <div className='flex flex-row'>
+          <ModeProvider>
+          <AdvancedProvider>
           <Header />
           <div className='flex flex-col h-screen items-center justify-center gap-y-8 py-16 px-16  w-3/4 border-4 border-double'>
           {children}
           </div>
+          </AdvancedProvider>
+          </ModeProvider>
         </div>
         </DesignProvider>
         

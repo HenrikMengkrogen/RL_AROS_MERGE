@@ -5,6 +5,9 @@ import { IDesignContext, DesignContext } from '../designContext';
 import { LoadingIndicator, DesignOutput, Viewer3d } from '../components'
 import { Sequence } from "molstar/lib/mol-model/sequence";
 import { blob } from "stream/consumers";
+import Link from 'next/link';
+import Image from 'next/image';
+import img from '../../public/file_download.svg'
 
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
@@ -90,8 +93,22 @@ export default function Page() {
      <h1>Construct outputs</h1>
      {isDataLoading && <LoadingIndicator />}
      {!isDataLoading && submit !=2 && <DesignOutput response={response}/>}
-     <div className="h-50 max-h-50"></div>
-     {!isDataLoading && (pdb_link != "") && submit !=2 && <Viewer3d url={pdb_link} />}
+    <div className="h-50 max-h-50 p-10">
+     {!isDataLoading && (pdb_link != "") && submit !=2 && (<div className="flex flex-col">
+        <div className="flex bg-gray-400 rounded -mb-16 z-40 justify-end ml-auto">
+     <Link href={pdb_link}>
+     <Image
+          src={img}
+          alt="Team logo"
+          width={50}
+          height={50}
+          priority />
+     </Link>
+    </div>
+     <div className="z-0"><Viewer3d url={pdb_link} /></div>
+     </div>)}
+    </div>
+
     </main>
 
   )

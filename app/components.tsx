@@ -3,7 +3,7 @@ import { useState, useRef, useContext, useEffect } from "react";
 import { IDesignContext, DesignContext } from './designContext';
 import Image from 'next/image';
 import img from '../public/logo.svg'
-
+import { IAdvancedContext, AdvancedContext } from './advancedContext';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { DefaultPluginSpec } from 'molstar/lib/mol-plugin/spec';
 import { list } from 'postcss';
@@ -343,3 +343,84 @@ export function MiRNATable(response : {miRNAList : string[] , description : stri
   </div>
  );
 }
+
+
+function SequenceComponents({items, setItems} : {items: Array<{seq_name:string, seq: string, structure:string}>, setItems: React.Dispatch<React.SetStateAction<{seq_name: string;seq: string;structure: string;}[]>>}) {
+  const itemCards = [];
+  const iadvancedContext: IAdvancedContext = useContext(AdvancedContext);
+  function handleNameChange(e : any, index : number) {
+    let updated_items = [...items]
+    updated_items[index].seq_name = e.target.value
+    setItems(updated_items)
+  }
+  function handleSeqChange(e : any, index : number) {
+    let updated_items = [...items]
+    updated_items[index].seq = e.target.value
+    setItems(updated_items)
+    const concat_sequence = items.map(item => item.seq).join("")
+    iadvancedContext.setSequence(concat_sequence)
+  }
+  function handleStructChange(e : any, index : number) {
+    let updated_items = [...items]
+    updated_items[index].structure = e.target.value
+    setItems(updated_items)
+    const concat_structure = items.map(item => item.structure).join("")
+    iadvancedContext.setStructure(concat_structure)
+  }
+  function handleDelete(e : any, index : number) {
+    let updated_items = [...items]
+    updated_items.splice(index, 1)
+    setItems(updated_items)
+  }
+  for (let i = 0; i < items.length; i++) {
+    itemCards.push(
+      <div key={i} className='flex flex-col items-center p-2 bg-[#ccc]'>
+        <div className='flex flex-row font-mono'>
+        <input className='text-center'
+          name='inp_sequence_name'
+            type="text"
+            value={items[i].seq_name}
+            onChange={(e : any) =>handleNameChange(e, i)}
+          />
+          <button onClick={(e : any) =>handleDelete(e, i)}>X</button>
+          </div>
+          <input className='text-center font-mono'
+          name='inp_sequence'
+            type="text"
+            value={items[i].seq}
+            onChange={(e : any) =>handleSeqChange(e, i)}
+          />
+          <input className='text-center font-mono'
+          name='inp_structure'
+            type="text"
+            value={items[i].structure}
+            onChange={(e : any) =>handleStructChange(e, i)}
+          />
+    </div>
+   )
+  }
+  return(
+  <div className='flex flex-row p-2 flex-wrap'>
+    {itemCards}
+  </div>);
+}
+
+export function SequenceInput() {
+    const [items, setItems] = useState([{seq_name: "miRNA1", seq: "UAGCUUAUCAGACUGAUGUUGACU", structure:".................."}]);
+
+    function handlePlusClickL(e : any) {
+      const updated_items_list = [{seq_name: "", seq: "", structure:""}, ...items]
+      setItems(updated_items_list)
+    }
+    function handlePlusClickR(e : any) {
+      const updated_items_list = [ ...items, {seq_name: "", seq: "",structure:""}]
+      setItems(updated_items_list)
+    }
+    return(
+    <div className='flex flex-row'>
+      {(items.length > 0) && <button className='bg-[#ccc]' onClick={handlePlusClickL}>+</button>}
+      <SequenceComponents items={items} setItems={setItems}/>
+      <button className='bg-[#ccc]' onClick={handlePlusClickR}>+</button>
+    </div>);
+}
+
