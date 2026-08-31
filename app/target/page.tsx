@@ -1,7 +1,8 @@
 "use client";
 import { useState, useRef, useContext, useEffect } from "react";
 import {MiRNATable} from '../components'
-import Select from 'react-select';
+import AsyncSelect from 'react-select/async';
+import disease_names from '../../data/HMDD_disease_names.json';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -26,37 +27,44 @@ let default_option: Option = {
           .then((data) => {
             setmiRNAResults(data.results ?? ["No matches found"]);
             setdescriptions(data.descriptions ?? ["No matches found"]);
-            // idesignContext.setProtein(data.sequence); Set miRNAs
           })
           .catch(() => {setmiRNAResults(["Something went wrong"]); setdescriptions(["Something went wrong"]);});
     }, [selectedTarget]);
 
   function handleTargetChange(e: any) {
-    e.preventDefault()
-    setSelectedTarget(e.target.value)
-  }
-  function handleTargetChange2(e: any) {
     setSelectedOption(e)
     setSelectedTarget(selectedOption.value)
   }
-  const options: Array<Option> = [
-  { value: 'nonpapillary renal cell carcinoma', label: 'nonpapillary renal cell carcinoma' },
-  { value: 'Myocardial Fibrosis', label: 'Myocardial Fibrosis' }
-  ];
+
+  //const options: Array<Option> = [
+  //{ value: 'nonpapillary renal cell carcinoma', label: 'nonpapillary renal cell carcinoma' },
+  //{ value: 'Myocardial Fibrosis', label: 'Myocardial Fibrosis' }
+  //];
+  const options: Array<Option> = disease_names.map(parse_option)
+  function parse_option (name:string) : Option {
+    return({value: name, label: name})
+  }
+  const loadOptions = (input: string) =>
+  Promise.resolve(
+    options
+      .filter(o => o.label.toLowerCase().includes(input.toLowerCase()))
+      .slice(0, 10)
+  );
   return (
     <main className="flex min-h-screen flex-col items-center justify-around p-10">
         <h1>Target page</h1>
         <div className="w-80">
         <label>
         Pick a target:
-        <Select<Option>
+        <AsyncSelect<Option>
           value={selectedOption}
-          onChange={(option) => handleTargetChange2(option)}
+          onChange={(option) => handleTargetChange(option)}
+          loadOptions={loadOptions}
           options={options}
           isClearable
           isSearchable
-          placeholder="Select a music genre..."
-          aria-label="Music genre selector"
+          placeholder="Select a disease..."
+          aria-label="Target disease selector"
         />
         </label>
         </div>

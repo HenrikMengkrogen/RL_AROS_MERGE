@@ -89,12 +89,12 @@ def python_route():
         req_data = request.get_json()
         #TODO Validate incoming data
         #TODO Change defualt, just for testing
-        print(f"miRNA1: {req_data['miRNA1']} \n miRNA2: {req_data['miRNA2']} \n spacer: {req_data['spacer']} \n rbs_site: {req_data['rbs_site']} \n protein: {req_data['protein']} \n toehold: {req_data['toehold']} \n")
-        [res_sequence, res_structure, disp_structure, mfe] = construct_design([req_data['miRNA1'], req_data['miRNA2'], req_data['spacer'], req_data['rbs_site'], req_data['protein'], req_data['toehold']])
+        print(f"miRNA1: {req_data['miRNA1']} \n miRNA2: {req_data['miRNA2']} \n  protein: {req_data['protein']} \n")
+        [res_sequence, res_structure, original_structure, mfe] = construct_design([req_data['miRNA1'], req_data['miRNA2'], req_data['protein']])
 
         return jsonify({"sequence": res_sequence, 
-                "original_exp_structure": res_structure,
-                "disp_structure": disp_structure,
+                "generated_structure": res_structure,
+                "original_structure": original_structure,
                 "mfe": mfe})
                 #"pdb_content_bytes": pdb_content})
     else: 
@@ -223,12 +223,12 @@ def hill_climb_design(seq_in, structure, max_steps=10000,
     comp_dict = {'A': 'U', 'U': 'A', 'G': 'C', 'C': 'G'}
     pair_map = get_pair_map(structure, seq_in)
     n_positions = [i for i, x in enumerate(seq_in) if not(x in comp_dict)]
-    print(n_positions)
     current, named_domains = mutate_seq(seq_in, structure, wobble_frequency=wobble_frequency)
     current_dist, current_ss, current_mfe = bp_distance_to_target(current, structure)
     print(named_domains)
     best_candidates = [(current_dist, current, current_ss, current_mfe)]
-
+    if len(n_positions) == 0:
+            return best_candidates
     print(seq_in + "\n")
 
     for step in range(max_steps):
@@ -303,42 +303,38 @@ def multi_start_hill_climb(seq_in, structure,
 
 def construct_design(domains):
     #RL3
-    miRNA1 = "UAGCUUAUCAGACUGAUGUUGACU"
+    '''miRNA1 = "UAGCUUAUCAGACUGAUGUUGACU"
     miRNA2 = "UGGAGUGUGACAAUGGUGUUUG"
+    '''
+    miRNA1 = domains[0]
+    miRNA2 = domains[1]
     RiboSwitch = "UUUUCCAUCAAGAACAGGCCACCAUGGAAAA"
 
     #Gen ="CGUAAAGGAGAAGAACUUUUCACUGGAGUUGUCCCAAUUCUUGUUGAAUUAGAUGGUGAUGUUAAUGGGCACAAAUUUUCUGUCAGUGGAGAGGGUGAAGGUGAUGCAACAUACGGAAAACUUACCCUUAAAUUUAUUUGCACUACUGGAAAACUACCUGUUCCAUGGCCAACACUUGUCACUACUUUCGGUUAUGGUGUUCAAUGCUUUGCGAGAUACCCAGAUCAUAUGAAACAGCAUGACUUUUUCAAGAGUGCCAUGCCCGAAGGUUAUGUACAGGAAAGAACUAUAUUUUUCAAAGAUGACGGGAACUACAAGACACGUGCUGAAGUCAAGUUUGAAGGUGAUACCCUUGUUAAUAGAAUCGAGUUAAAAGGUAUUGAUUUUAAAGAAGAUGGAAACAUUCUUGGACACAAAUUGGAAUACAACUAUAACUCACACAAUGUAUACAUCAUGGCAGACAAACAAAAGAAUGGAAUCAAAGUUAACUUCAAAAUUAGACACAACAUUGAAGAUGGAAGCGUUCAACUAGCAGACCAUUAUCAACAAAAUACUCCAAUUGGCGAUGGCCCUGUCCUUUUACCAGACAACCAUUACCUGUCCACACAAUCUGCCCUUUCGAAAGAUCCCAACGAAAAGAGAGAuCACAUGGUCCUUCUUGAGUUUGUAACAGCUGCUGGGAUUACACAUGGCAUGGAUGAACUAUACAAAUAA"
 
     Toehold = 'K' *10
 
-    #Toehold2 = 'K' * 10
-
     loop7 = "N" * 7
 
-    algorithm_selector = 'Hill'
-
     #RL3
-    RiboSwitchDisplace = "R" *13
+    RiboSwitchDisplace = "R" * 13
     domain_order = (comp(miRNA1) + comp(miRNA2) + comp(RiboSwitchDisplace) + comp(Toehold) + miRNA2[7:]
                     + loop7 + miRNA1[7:] + Toehold + RiboSwitchDisplace + RiboSwitch + comp(RiboSwitchDisplace))
 
     structure_map = ('(' *len(comp(miRNA1)[7:]) + '.' *len(comp(miRNA1)[:7]) + '(' *len(comp(miRNA2)[7:]) + '.' *len(comp(miRNA2)[:7]) + '.' * len((comp(RiboSwitchDisplace) + comp(Toehold))) + ')' * len(miRNA2[7:]) + 
                      '.' * len(loop7) + ')' * len(miRNA1[7:]) + '.' * len(Toehold) + '(' * len(RiboSwitchDisplace) + '.' * len(RiboSwitch) + ')' * len(comp(RiboSwitchDisplace)))
 
-
-    if algorithm_selector == 'Hill':
-            results = multi_start_hill_climb(domain_order, structure_map)
-            best_result = min(results, key=lambda x: x[3])
-            print(structure_map)
-            with open("../data/run19.txt", "w") as f:
+    results = multi_start_hill_climb(domain_order, structure_map)
+    best_result = min(results, key=lambda x: x[3])
+    print(structure_map)
+    with open("../data/run20.txt", "w") as f:
                 for res in results:
                      f.write(str(res))
                      f.write("\n")
                      f.write("Main strand: " +res[1])
                      f.write("\n")
                      f.write("\n")
-
-    return [best_result[1], structure_map, best_result[2], best_result[3]]
+    return [best_result[1],  best_result[2], structure_map, best_result[3]]
 
 
 @app.route("/pdb", methods=['POST'])
@@ -409,6 +405,8 @@ def advanced_construct():
         #TODO validate
         sequence = req_data['sequence']
         structure = req_data['structure']
+        print(sequence)
+        print(structure)
 
         results = multi_start_hill_climb(sequence, structure)
         best_result = min(results, key=lambda x: x[3])

@@ -38,6 +38,7 @@ export function Header() {
     </div>
   );
   }
+  //<NavButton label="Logic gates" />
   else {
     return (
     <div className="flex flex-col h-screen items-center justify-center gap-y-8 py-16 px-16  w-1/4 border-4 border-double">
@@ -54,9 +55,7 @@ export function Header() {
       <NavButton label="Home" />
       <NavButton label="Target" />
       <NavButton label="miRNA inputs" />
-      <NavButton label="Logic gates" />
       <NavButton label="Protein output" />
-      <NavButton label="Additional parameters" />
       <NavButton label="Design" />
     </div>
   );

@@ -141,74 +141,6 @@ export function ProteinInputField() {
   );
 }
 
-export function SpacerInputField() {
-  const idesignContext: IDesignContext = useContext(DesignContext);
-  function handleChange(e: any) {
-    idesignContext.setSpacer(e.target.value)
-  }
-  return(
-    <div>
-    <form>
-          <label> 
-          Enter a spacer sequence or length:
-          <input
-          name='inp_sequence'
-            type="text"
-            defaultValue={idesignContext.spacer}
-            onChange={handleChange}
-          />
-        </label>
-      </form>
-      </div>
-  );
-}
-
-export function RbsInputField() {
-  const idesignContext: IDesignContext = useContext(DesignContext);
-  function handleChange(e: any) {
-    idesignContext.setRbs_site(e.target.value)
-  }
-  return(
-    <div>
-    <form>
-          <label> 
-          Enter the ribosomal binding site sequence:
-          <input
-          name='inp_sequence'
-            type="text"
-            defaultValue={idesignContext.rbs_site}
-            onChange={handleChange}
-          />
-        </label>
-      </form>
-      </div>
-  );
-}
-
-
-export function ToeholdInputField() {
-  const idesignContext: IDesignContext = useContext(DesignContext);
-  function handleChange(e: any) {
-    idesignContext.setToehold(e.target.value)
-  }
-  return(
-    <div>
-    <form>
-          <label> 
-          Enter the toehold sequence:
-          <input
-          name='inp_sequence'
-            type="text"
-            defaultValue={idesignContext.toehold}
-            onChange={handleChange}
-          />
-        </label>
-      </form>
-      </div>
-  );
-}
-
-
 //Loading animation
 export function LoadingIndicator() {
 
@@ -225,20 +157,26 @@ export function LoadingIndicator() {
         />
     </div>
   );
-
 }
 
-
-export function DesignOutput(response : any) {
+export function DesignOutput({sequence, gen_structure, original_structure, mfe} : {sequence: string, gen_structure: string, original_structure:string, mfe:string}) {
   return (
     <>
     <h2>Designed sequence: </h2>
     <div className='flex bg-white max-h-80 overflow-y-auto'>    
-        <p className='break-all'>{response.response.sequence}</p>
+        <p className='font-mono break-all'>{sequence}</p>
     </div>
-     <p>Original expected structure: {response.response.original_exp_structure}</p>
-     <p>Structure with displacemenet strand: {response.response.disp_structure}</p>
-     <p>MFE: {response.response.mfe}</p>
+    <div className='flex flex-row '>
+    <div className='flex flex-col'>
+      <p>Generated structure:</p>
+      <p>Original structure:</p>
+    </div>
+    <div className='min-w-0 flex-1 overflow-x-auto max-w-2xl bg-white'>
+     <p className='font-mono text-sm whitespace-nowrap'>{gen_structure}</p>
+     <p className='font-mono text-sm whitespace-nowrap'>{original_structure}</p>
+    </div>
+    </div>
+     <p className='font-mono'>MFE: {mfe}</p>
      </>
   );
 }
@@ -250,7 +188,6 @@ export function Viewer3d({ url = 'https://files.rcsb.org/download/1CRN.cif' }) {
   const pluginRef = useRef<PluginContext | null>(null);
   const [ready, setReady] = useState(false);
 
-  // 1) One-time init. Empty deps → runs once for the component's life.
   useEffect(() => {
     const canvas = canvasRef.current;
     const parent = parentRef.current;
@@ -278,14 +215,13 @@ export function Viewer3d({ url = 'https://files.rcsb.org/download/1CRN.cif' }) {
     };
   }, []);
 
-  // 2) Load structure whenever url changes (or once ready). No re-init.
   useEffect(() => {
     const plugin = pluginRef.current;
     if (!ready || !plugin) return;
 
     let cancelled = false;
     (async () => {
-      await plugin.clear(); // remove previous structure before loading the new one
+      await plugin.clear();
       if (cancelled) return;
 
       const data = await plugin.builders.data.download({ url }, { state: { isGhost: true } });
@@ -357,15 +293,11 @@ function SequenceComponents({items, setItems} : {items: Array<{seq_name:string, 
     let updated_items = [...items]
     updated_items[index].seq = e.target.value
     setItems(updated_items)
-    const concat_sequence = items.map(item => item.seq).join("")
-    iadvancedContext.setSequence(concat_sequence)
   }
   function handleStructChange(e : any, index : number) {
     let updated_items = [...items]
     updated_items[index].structure = e.target.value
     setItems(updated_items)
-    const concat_structure = items.map(item => item.structure).join("")
-    iadvancedContext.setStructure(concat_structure)
   }
   function handleDelete(e : any, index : number) {
     let updated_items = [...items]
@@ -406,7 +338,14 @@ function SequenceComponents({items, setItems} : {items: Array<{seq_name:string, 
 }
 
 export function SequenceInput() {
-    const [items, setItems] = useState([{seq_name: "miRNA1", seq: "UAGCUUAUCAGACUGAUGUUGACU", structure:".................."}]);
+  const iadvancedContext: IAdvancedContext = useContext(AdvancedContext);
+    const [items, setItems] = useState([{seq_name: "miRNA1", seq: "UAGCUUAUCAGACUGAUGUUGACU", structure:".................."}, 
+                                        {seq_name: "miRNA2", seq: "UGGAGUGUGACAAUGGUGUUUG", structure:".................."}
+    ]);
+    useEffect(() => {
+  iadvancedContext.setSequence(items.map(i => i.seq).join(""));
+  iadvancedContext.setStructure(items.map(i => i.structure).join(""));
+}, [items]);
 
     function handlePlusClickL(e : any) {
       const updated_items_list = [{seq_name: "", seq: "", structure:""}, ...items]
@@ -416,11 +355,17 @@ export function SequenceInput() {
       const updated_items_list = [ ...items, {seq_name: "", seq: "",structure:""}]
       setItems(updated_items_list)
     }
+    function handleRiboTemplate() {
+      setItems([{seq_name: "miRNA1", seq: "UAGCUUAUCAGACUGAUGUUGACU", structure:".................."}, {seq_name: "miRNA2", seq: "UGGAGUGUGACAAUGGUGUUUG", structure:".................."},{seq_name: "loop7", seq: "NNNNNNN", structure:"......."}])
+   }
     return(
+    <>
+    <button onClick={handleRiboTemplate}>RiboLogic template</button>
     <div className='flex flex-row'>
       {(items.length > 0) && <button className='bg-[#ccc]' onClick={handlePlusClickL}>+</button>}
       <SequenceComponents items={items} setItems={setItems}/>
       <button className='bg-[#ccc]' onClick={handlePlusClickR}>+</button>
-    </div>);
+    </div>
+    </>);
 }
 

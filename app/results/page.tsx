@@ -6,7 +6,6 @@ import { LoadingIndicator, DesignOutput, Viewer3d } from '../components'
 import Link from 'next/link';
 import Image from 'next/image';
 import img from '../../public/file_download.svg'
-import { Sequence } from "molstar/lib/mol-model/sequence";
 
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
@@ -34,7 +33,8 @@ export default function Page() {
         }
         else {
         setIsDataLoading(true)
-
+        console.log(iadvancedContext.sequence)
+        console.log(iadvancedContext.structure)
         await fetch(BACKEND_URL + "/advanced", {
                 method: "POST",
                 headers: { "Content-type": "application/json"},
@@ -79,7 +79,8 @@ export default function Page() {
     <button onClick={handleButtonSubmit} className="py-4 px-4 rounded-full transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]">Construct the design!</button>
      <h1>Construct outputs</h1>
      {isDataLoading && <LoadingIndicator />}
-     {!isDataLoading && submit !=2 && <DesignOutput response={response}/>}
+     {!isDataLoading && submit !=2 && 
+     <DesignOutput sequence={response.sequence} gen_structure={response.generated_structure} original_structure={iadvancedContext.structure} mfe={response.mfe}/>}
     <div className="h-50 max-h-50 p-10">
      {!isDataLoading && (pdb_link != "") && submit !=2 && (<div className="flex flex-col">
         <div className="flex bg-gray-400 rounded -mb-16 z-40 justify-end ml-auto">

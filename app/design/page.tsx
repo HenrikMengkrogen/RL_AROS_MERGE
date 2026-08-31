@@ -3,8 +3,6 @@
 import { useState, useEffect, useCallback, useContext } from "react";
 import { IDesignContext, DesignContext } from '../designContext';
 import { LoadingIndicator, DesignOutput, Viewer3d } from '../components'
-import { Sequence } from "molstar/lib/mol-model/sequence";
-import { blob } from "stream/consumers";
 import Link from 'next/link';
 import Image from 'next/image';
 import img from '../../public/file_download.svg'
@@ -20,9 +18,10 @@ export default function Page() {
    const [pdb_link, setPdb_link] = useState("")
    const [response, setdata] = useState({
         sequence: "",
-        original_exp_structure: "",
-        disp_structure: "",
-        mfe: ""
+        generated_structure: "",
+        original_structure: "",
+        mfe: "",
+        filepath: ""
     });
     //Loading indicator
     const [isDataLoading, setIsDataLoading] = useState(false);
@@ -42,18 +41,16 @@ export default function Page() {
                 body: JSON.stringify({
                     miRNA1: idesignContext.miRNA_list[0],
                     miRNA2: idesignContext.miRNA_list[1],
-                    protein: idesignContext.protein,
-                    spacer: idesignContext.spacer,
-                    rbs_site: idesignContext.rbs_site,
-                    toehold: idesignContext.toehold
+                    protein: idesignContext.protein
                 })
             }).then((res) =>
                 res.json().then((data) => {
                     setdata({
                         sequence: data.sequence,
-                        original_exp_structure: data.original_exp_structure,
-                        disp_structure: data.disp_structure,
-                        mfe: data.mfe
+                        generated_structure: data.generated_structure,
+                        original_structure: data.original_structure,
+                        mfe: data.mfe,
+                        filepath: data.filepath
                     });
                     fetch(BACKEND_URL + "/pdb", {
                     method: "POST",
@@ -61,7 +58,7 @@ export default function Page() {
                     //Match inputs here
                     body: JSON.stringify({
                     seq: data.sequence,
-                    structure: data.original_exp_structure
+                    structure: data.generated_structure
                 })
             }).then((res) => res.json().then((pdb_data) => setPdb_link(BACKEND_URL + pdb_data.path + ".pdb")))
                 })
@@ -78,11 +75,7 @@ export default function Page() {
     }
     //Demo1 paramteres
     function handleDemo1() {
-        idesignContext.setMiRNA_list(["CUCUGAC", "CUCUUUC"])
-        idesignContext.setMiRNA_name_list(["CUCUGAC", "CUCUUUC"])
-        idesignContext.setSpacer("NNNN")
-        idesignContext.setRbs_site("AGGAGGACAGCUAUG")
-        idesignContext.setToehold("CA")
+        idesignContext.setMiRNA_list(["UAGCUUAUCAGACUGAUGUUGACU", "UGGAGUGUGACAAUGGUGUUUG"])
         idesignContext.setProtein("")
     }
 
@@ -92,7 +85,7 @@ export default function Page() {
     <button onClick={handleButtonSubmit} className="py-4 px-4 rounded-full transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]">Construct the design!</button>
      <h1>Construct outputs</h1>
      {isDataLoading && <LoadingIndicator />}
-     {!isDataLoading && submit !=2 && <DesignOutput response={response}/>}
+     {!isDataLoading && submit !=2 && <DesignOutput sequence={response.sequence} gen_structure={response.generated_structure} original_structure={response.original_structure} mfe={response.mfe}/>}
     <div className="h-50 max-h-50 p-10">
      {!isDataLoading && (pdb_link != "") && submit !=2 && (<div className="flex flex-col">
         <div className="flex bg-gray-400 rounded -mb-16 z-40 justify-end ml-auto">
