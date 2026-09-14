@@ -78,7 +78,6 @@ export default function Page() {
         idesignContext.setMiRNA_list(["UAGCUUAUCAGACUGAUGUUGACU", "UGGAGUGUGACAAUGGUGUUUG"])
         idesignContext.setProtein("")
     }
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-around p-10">
     <button onClick={handleDemo1} className="py-4 px-4 rounded-full transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]">Demo data 1</button>

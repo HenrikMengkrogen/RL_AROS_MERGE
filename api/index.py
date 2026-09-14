@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-from flask import request, send_file
+from flask import request
 import pandas as pd
 import RNA
 import random
@@ -101,8 +101,6 @@ def python_route():
         print("Type of request is not POST")
     
 
-
-from pyfurnace.generate.road import generate_road
 from pyfurnace import Origami
 
 def comp(seq): # This is just generate the complementary domains -> since the script went trough a couple of iterations there are some redundancy in some of the functions, but I will clean that up later
@@ -286,7 +284,7 @@ def hill_climb_design(seq_in, structure, max_steps=10000,
 
 
 def multi_start_hill_climb(seq_in, structure,
-                             n_runs=1, max_steps=500, wobble_frequency=0.05): 
+                             n_runs=4, max_steps=15000, wobble_frequency=0.05): 
     results = []
     for run in range(n_runs):
         pool = hill_climb_design(seq_in, structure,

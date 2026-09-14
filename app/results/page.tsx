@@ -80,7 +80,7 @@ export default function Page() {
      <h1>Construct outputs</h1>
      {isDataLoading && <LoadingIndicator />}
      {!isDataLoading && submit !=2 && 
-     <DesignOutput sequence={response.sequence} gen_structure={response.generated_structure} original_structure={iadvancedContext.structure} mfe={response.mfe}/>}
+     <DesignOutput sequence={response.sequence} gen_structure={response.generated_structure} original_structure={iadvancedContext.structure.join("")} mfe={response.mfe}/>}
     <div className="h-50 max-h-50 p-10">
      {!isDataLoading && (pdb_link != "") && submit !=2 && (<div className="flex flex-col">
         <div className="flex bg-gray-400 rounded -mb-16 z-40 justify-end ml-auto">
