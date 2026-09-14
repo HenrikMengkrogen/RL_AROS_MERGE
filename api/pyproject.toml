@@ -23,6 +23,5 @@ override-dependencies = [
     "st_forna_component; sys_platform == 'never'",
     "streamlit_option_menu; sys_platform == 'never'",
     "st-oxview; sys_platform == 'never'",
-    "matplotlib; sys_platform == 'never'",
     "pytest; sys_platform == 'never'",
 ]
