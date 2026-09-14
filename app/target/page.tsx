@@ -31,15 +31,10 @@ let default_option: Option = {
           .catch(() => {setmiRNAResults(["Something went wrong"]); setdescriptions(["Something went wrong"]);});
     }, [selectedTarget]);
 
-  function handleTargetChange(e: any) {
-    setSelectedOption(e)
-    setSelectedTarget(selectedOption.value)
+  function handleTargetChange(option: Option | null) {
+    setSelectedOption(option ?? default_option)
+    setSelectedTarget(option?.value ?? "")
   }
-
-  //const options: Array<Option> = [
-  //{ value: 'nonpapillary renal cell carcinoma', label: 'nonpapillary renal cell carcinoma' },
-  //{ value: 'Myocardial Fibrosis', label: 'Myocardial Fibrosis' }
-  //];
   const options: Array<Option> = disease_names.map(parse_option)
   function parse_option (name:string) : Option {
     return({value: name, label: name})
@@ -57,9 +52,11 @@ let default_option: Option = {
         <label>
         Pick a target:
         <AsyncSelect<Option>
+          instanceId="target-select"
           value={selectedOption}
           onChange={(option) => handleTargetChange(option)}
           loadOptions={loadOptions}
+          defaultOptions={options.slice(0, 10)}
           options={options}
           isClearable
           isSearchable

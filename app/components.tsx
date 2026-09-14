@@ -6,7 +6,7 @@ import img from '../public/logo.svg'
 import { IAdvancedContext, AdvancedContext } from './advancedContext';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { DefaultPluginSpec } from 'molstar/lib/mol-plugin/spec';
-import { list } from 'postcss';
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -33,6 +33,11 @@ export function MiRNAInputField({index} :{index : number}) {
         .then((data) => {
           setSuggestions(data.suggestions ?? ["No matches found"]);
           setMirSeqFull(data.sequence);
+          idesignContext.setMiRNA_list(prev => {          // write it here
+            const next = [...prev];
+            next[index] = data.sequence;
+            return next;
+          });
         })
         .catch(() => { setSuggestions(["Something went wrong"]);});
     }, 350);
@@ -40,11 +45,6 @@ export function MiRNAInputField({index} :{index : number}) {
   }, [idesignContext.miRNA_name_list[index]]);
 
   function handleChange(e: any) {
-
-          const updated_miRNA_list = [...idesignContext.miRNA_list]
-          updated_miRNA_list[index] = e.target.value
-            //console.log(updated_miRNA_list)
-            idesignContext.setMiRNA_list(updated_miRNA_list);
         //Update sequence to context
         const updated_miRNA_name_list = [...idesignContext.miRNA_name_list]
         updated_miRNA_name_list[index] = e.target.value
@@ -238,7 +238,7 @@ export function Viewer3d({ url = 'https://files.rcsb.org/download/1CRN.cif' }) {
   return (
     <div
     ref={parentRef}
-    style={{ position: 'relative', width: '100%', height: '600px', overflow: 'hidden' }}
+    style={{ position: 'relative', width: '100%', height: '400px', overflow: 'hidden' }}
     >
     <canvas ref={canvasRef} style={{ display: 'block' }} />
     </div>
@@ -279,11 +279,14 @@ export function MiRNATable(response : {miRNAList : string[] , description : stri
   </div>
  );
 }
+interface CardConent {
+  seq_name: string,
+  seq: string,
+  structure: string
+}
 
-
-function SequenceComponents({items, setItems} : {items: Array<{seq_name:string, seq: string, structure:string}>, setItems: React.Dispatch<React.SetStateAction<{seq_name: string;seq: string;structure: string;}[]>>}) {
+function SequenceComponents({items, setItems} : {items: Array<CardConent>, setItems: React.Dispatch<React.SetStateAction<CardConent[]>>}) {
   const itemCards = [];
-  const iadvancedContext: IAdvancedContext = useContext(AdvancedContext);
   function handleNameChange(e : any, index : number) {
     let updated_items = [...items]
     updated_items[index].seq_name = e.target.value
@@ -305,24 +308,25 @@ function SequenceComponents({items, setItems} : {items: Array<{seq_name:string, 
     setItems(updated_items)
   }
   for (let i = 0; i < items.length; i++) {
+    const width = Math.max(items[i].seq_name.length,items[i].seq.length, items[i].structure.length, 10);
     itemCards.push(
-      <div key={i} className='flex flex-col items-center p-2 bg-[#ccc]'>
+      <div key={i} className='flex flex-col items-stretch p-2 bg-[#ccc]'>
         <div className='flex flex-row font-mono'>
-        <input className='text-center'
+        <input size={width} className='text-center field-sizing-content'
           name='inp_sequence_name'
             type="text"
             value={items[i].seq_name}
             onChange={(e : any) =>handleNameChange(e, i)}
           />
-          <button onClick={(e : any) =>handleDelete(e, i)}>X</button>
+          <button className='bg-white' onClick={(e : any) =>handleDelete(e, i)}>X</button>
           </div>
-          <input className='text-center font-mono'
+          <input size={width} className='flex text-center font-mono field-sizing-content'
           name='inp_sequence'
             type="text"
             value={items[i].seq}
             onChange={(e : any) =>handleSeqChange(e, i)}
           />
-          <input className='text-center font-mono'
+          <input size={width} className='flex text-center font-mono field-sizing-content'
           name='inp_structure'
             type="text"
             value={items[i].structure}
@@ -332,19 +336,22 @@ function SequenceComponents({items, setItems} : {items: Array<{seq_name:string, 
    )
   }
   return(
-  <div className='flex flex-row p-2 flex-wrap'>
+  <div className='flex flex-row p-2 flex-wrap gap-y-8'>
     {itemCards}
   </div>);
 }
 
 export function SequenceInput() {
   const iadvancedContext: IAdvancedContext = useContext(AdvancedContext);
-    const [items, setItems] = useState([{seq_name: "miRNA1", seq: "UAGCUUAUCAGACUGAUGUUGACU", structure:".................."}, 
-                                        {seq_name: "miRNA2", seq: "UGGAGUGUGACAAUGGUGUUUG", structure:".................."}
-    ]);
-    useEffect(() => {
-  iadvancedContext.setSequence(items.map(i => i.seq).join(""));
-  iadvancedContext.setStructure(items.map(i => i.structure).join(""));
+    let starter_items : Array<CardConent> = []
+    for (let i = 0; i < iadvancedContext.name.length; i++) {
+      starter_items.push({seq_name: iadvancedContext.name[i], seq: iadvancedContext.sequence[i], structure:iadvancedContext.structure[i]})
+    }
+    const [items, setItems] = useState(starter_items);
+  useEffect(() => {
+  iadvancedContext.setName(items.map(i => i.seq_name));
+  iadvancedContext.setSequence(items.map(i => i.seq));
+  iadvancedContext.setStructure(items.map(i => i.structure));
 }, [items]);
 
     function handlePlusClickL(e : any) {
@@ -356,16 +363,86 @@ export function SequenceInput() {
       setItems(updated_items_list)
     }
     function handleRiboTemplate() {
-      setItems([{seq_name: "miRNA1", seq: "UAGCUUAUCAGACUGAUGUUGACU", structure:".................."}, {seq_name: "miRNA2", seq: "UGGAGUGUGACAAUGGUGUUUG", structure:".................."},{seq_name: "loop7", seq: "NNNNNNN", structure:"......."}])
+      setItems([{seq_name: "comp(miRNA1)", seq: "AGUCAACAUCAGUCUGAUAAGCUA", structure:"(((((((((((((((((......."}, 
+        {seq_name: "comp(miRNA2)", seq: "CAAACACCAUUGUCACACUCCA", structure:"(((((((((((((((......."},
+        {seq_name: "comp(RiboSwitchDisplace)", seq: "rrrrrrrrrrrrr", structure:"............."},
+        {seq_name: "comp(Toehold)", seq: "kkkkkkkkkk", structure:".........."},
+        {seq_name: "miRNA2[7:]", seq: "UGACAAUGGUGUUUG", structure:")))))))))))))))"},
+        {seq_name: "loop7", seq: "NNNNNNN", structure:"......."},
+        {seq_name: "miRNA1[7:]", seq: "UCAGACUGAUGUUGACU", structure:")))))))))))))))))"},
+        {seq_name: "Toehold", seq: "KKKKKKKKKK", structure:".........."},
+        {seq_name: "RiboSwitchDisplace", seq: "RRRRRRRRRRRRR", structure:"((((((((((((("},
+        {seq_name: "Riboswitch", seq: "UUUUCCAUCAAGAACAGGCCACCAUGGAAAA", structure: "..............................."},
+        {seq_name: "comp(RiboSwitchDisplace)", seq: "rrrrrrrrrrrrr", structure:")))))))))))))"}
+        ])
    }
+   function handleEmptyTemplate() {
+      setItems([{seq_name: "", seq: "", structure:""}
+        ])
+   }
+
     return(
     <>
-    <button onClick={handleRiboTemplate}>RiboLogic template</button>
-    <div className='flex flex-row'>
-      {(items.length > 0) && <button className='bg-[#ccc]' onClick={handlePlusClickL}>+</button>}
+    <TemplateDropdown buttonLabel="Templates"  items={[{title:"Empty template", action:handleEmptyTemplate}, {title:"RiboLogic template", action:handleRiboTemplate}]}/>
+    <div className='flex flex-row items-center'>
+      {(items.length > 0) && <button className='bg-[#ccc] p-2 w-12 h-12' onClick={handlePlusClickL}>+</button>}
       <SequenceComponents items={items} setItems={setItems}/>
-      <button className='bg-[#ccc]' onClick={handlePlusClickR}>+</button>
+      <button className='bg-[#ccc] p-2 w-12 h-12' onClick={handlePlusClickR}>+</button>
     </div>
     </>);
 }
 
+interface SingleLevelDropdownMenuProps {
+  buttonLabel: string;
+  setItems?: React.Dispatch<React.SetStateAction<CardConent[]>>;
+  items: {
+    title: string;
+    icon?: JSX.Element;
+    action?: () => void;
+  }[];
+}
+export const TemplateDropdown = ({
+  buttonLabel,
+  items,
+}: SingleLevelDropdownMenuProps) => {
+  const [open, setOpen] = useState(false);
+  const handleToggle = () => {
+    setOpen((prev) => !prev);
+  };
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        className="inline-flex items-center justify-center rounded-md text-sm border border-[#e4e4e7] h-10 px-4 py-2"
+        onClick={handleToggle}
+      >
+        {buttonLabel}
+        <span className="ml-2">
+          {open ? <FaChevronUp /> : <FaChevronDown />}
+        </span>
+      </button>
+      {open && (
+        <div className="absolute left-1/2 -translate-x-1/2 top-12">
+          <ul className="w-56 h-auto shadow-md rounded-md p-1 border bg-white">
+            {items.map((item, index) => (
+              <li
+                key={index}
+                className={`relative flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 rounded-md`}
+              >
+              <button className="w-full text-left"
+                onClick={() => {
+                  item.action?.();
+                  setOpen(false);
+                }}
+              type="button"
+              >
+              {item.title}
+              </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
