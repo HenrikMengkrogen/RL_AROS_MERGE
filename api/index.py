@@ -1,15 +1,16 @@
 from flask import Flask, jsonify
 from flask import request
-import pandas as pd
 import RNA
 import random
 import math
 import sqlite3
 import requests
 import os
+import pandas as pd
 from flask import send_from_directory
 from flask import abort
 from flask_cors import CORS, cross_origin
+from openpyxl import load_workbook
 
 app = Flask(__name__)
 
@@ -389,12 +390,23 @@ def serve_pdb(filename):
 @app.route("/target", methods=['GET'])
 def target_disease():
     query = request.args.get('query')
-    df = pd.read_excel('../data/HMDD.xlsx')
+    df = pd.read_excel("../data/HMDD.xlsx")
+    '''workbook = load_workbook(filename="../data/HMDD.xlsx")
+    # Get the first sheet.
+    worksheet = workbook.worksheets[0]
+    # Convert the sheet to a list of lists.
+    row_list = []
+    for r in worksheet.rows:
+        column = [cell.value for cell in r]
+        row_list.append(column)
+    '''
     diease_assoc_rows = df.loc[df['disease'] == query]
     miRNAs = diease_assoc_rows['miRNA'].tolist()
     descriptions = diease_assoc_rows['description'].tolist()
     return jsonify({"results": miRNAs, "descriptions": descriptions})
-
+    '''print(row_list[0])
+    return jsonify({"results": ["hsa", "hsaaaa"], "descriptions": ["wehgCLKS.", "KWHFELK"]})
+    '''
 
 @app.route("/advanced", methods=['POST'])
 def advanced_construct():
@@ -405,7 +417,6 @@ def advanced_construct():
         structure = req_data['structure']
         print(sequence)
         print(structure)
-
         results = multi_start_hill_climb(sequence, structure)
         best_result = min(results, key=lambda x: x[3])
 
