@@ -68,7 +68,7 @@ def mirna_suggestion():
     cutoff = 5
     suggestions = []
     sequence_result = ""
-    with sqlite3.connect('../data/mir_database.db') as connection:
+    with sqlite3.connect('./data/mir_database.db') as connection:
         cursor = connection.cursor()
         select_query = "SELECT * FROM MiRNAs WHERE name LIKE ?;"
         cursor.execute(select_query, ("%"+query+"%",))
@@ -285,7 +285,7 @@ def hill_climb_design(seq_in, structure, max_steps=10000,
 
 
 def multi_start_hill_climb(seq_in, structure,
-                             n_runs=4, max_steps=15000, wobble_frequency=0.05): 
+                             n_runs=5, max_steps=15000, wobble_frequency=0.05): 
     results = []
     for run in range(n_runs):
         pool = hill_climb_design(seq_in, structure,
@@ -326,7 +326,7 @@ def construct_design(domains):
     results = multi_start_hill_climb(domain_order, structure_map)
     best_result = min(results, key=lambda x: x[3])
     print(structure_map)
-    with open("../data/run20.txt", "w") as f:
+    with open("./data/run20.txt", "w") as f:
                 for res in results:
                      f.write(str(res))
                      f.write("\n")
@@ -380,7 +380,7 @@ def pdb_file():
 @app.route('/data/pdb/<path:filename>', methods=['GET'])
 @cross_origin()
 def serve_pdb(filename):
-    PDB_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'pdb'))
+    PDB_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '.', 'data', 'pdb'))
     try:    
         return send_from_directory(PDB_DIR, filename, mimetype='chemical/x-pdb', as_attachment=True, download_name='structure.pdb')
     except FileNotFoundError:
@@ -390,16 +390,7 @@ def serve_pdb(filename):
 @app.route("/target", methods=['GET'])
 def target_disease():
     query = request.args.get('query')
-    df = pd.read_excel("../data/HMDD.xlsx")
-    '''workbook = load_workbook(filename="../data/HMDD.xlsx")
-    # Get the first sheet.
-    worksheet = workbook.worksheets[0]
-    # Convert the sheet to a list of lists.
-    row_list = []
-    for r in worksheet.rows:
-        column = [cell.value for cell in r]
-        row_list.append(column)
-    '''
+    df = pd.read_excel("./data/HMDD.xlsx")
     diease_assoc_rows = df.loc[df['disease'] == query]
     miRNAs = diease_assoc_rows['miRNA'].tolist()
     descriptions = diease_assoc_rows['description'].tolist()
@@ -420,7 +411,7 @@ def advanced_construct():
         results = multi_start_hill_climb(sequence, structure)
         best_result = min(results, key=lambda x: x[3])
 
-        path = "../data/txt/" + str(random.random())[2:]
+        path = "./data/txt/" + str(random.random())[2:]
         with open(path, "w") as f:
                         for res in results:
                              f.write(str(res))
