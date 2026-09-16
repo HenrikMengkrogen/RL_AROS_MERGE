@@ -326,13 +326,14 @@ def construct_design(domains):
     results = multi_start_hill_climb(domain_order, structure_map)
     best_result = min(results, key=lambda x: x[3])
     print(structure_map)
-    with open("./data/run20.txt", "w") as f:
+    '''with open("./data/run20.txt", "w") as f:
                 for res in results:
                      f.write(str(res))
                      f.write("\n")
                      f.write("Main strand: " +res[1])
                      f.write("\n")
                      f.write("\n")
+    '''
     return [best_result[1],  best_result[2], structure_map, best_result[3]]
 
 
