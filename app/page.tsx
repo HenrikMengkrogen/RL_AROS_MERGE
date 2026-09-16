@@ -6,8 +6,8 @@ import { IModeContext, ModeContext } from './modeContext';
 export default function Home() {
   const imodeContext: IModeContext = useContext(ModeContext);
    return (
-   <main className="flex min-h-screen flex-col justify-between items-center justify-around p-10">
-    <h1>Home Page</h1>
+   <main className="flex min-h-screen flex-col items-center justify-around p-10">
+    <h1 className="mb-4 text-2xl font-bold tracking-tight text-heading md:text-4xl lg:text-5xl">Home Page</h1>
     <div className="flex gap-4">
       <span
         onClick={() => imodeContext.setisAdvancedMode(false)}

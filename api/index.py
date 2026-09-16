@@ -321,7 +321,7 @@ def construct_design(domains):
                     + loop7 + miRNA1[7:] + Toehold + RiboSwitchDisplace + RiboSwitch + comp(RiboSwitchDisplace))
 
     structure_map = ('(' *len(comp(miRNA1)[7:]) + '.' *len(comp(miRNA1)[:7]) + '(' *len(comp(miRNA2)[7:]) + '.' *len(comp(miRNA2)[:7]) + '.' * len((comp(RiboSwitchDisplace) + comp(Toehold))) + ')' * len(miRNA2[7:]) + 
-                     '.' * len(loop7) + ')' * len(miRNA1[7:]) + '.' * len(Toehold) + '(' * len(RiboSwitchDisplace) + '.' * len(RiboSwitch) + ')' * len(comp(RiboSwitchDisplace)))
+                     '.' * len(loop7) + ')' * len(miRNA1[7:]) + '.' * len(Toehold) + '(' * len(RiboSwitchDisplace) + '(' * 8 + '.' * (len(RiboSwitch) -16) + ')' * 8 +  ')' * len(comp(RiboSwitchDisplace)))
 
     results = multi_start_hill_climb(domain_order, structure_map)
     best_result = min(results, key=lambda x: x[3])
@@ -373,8 +373,8 @@ def pdb_file():
     print(origami)
     print(origami_motif_build)
     origami = origami_motif_build
-    path = "../data/pdb/" + str(random.random())[2:]
-    origami.save_3d_model(path, pdb=True)
+    path = "./data/pdb/" + str(random.random())[2:]
+    #origami.save_3d_model(path, pdb=True)
     return jsonify({"path": path[2:]})
 
 @app.route('/data/pdb/<path:filename>', methods=['GET'])
@@ -395,9 +395,6 @@ def target_disease():
     miRNAs = diease_assoc_rows['miRNA'].tolist()
     descriptions = diease_assoc_rows['description'].tolist()
     return jsonify({"results": miRNAs, "descriptions": descriptions})
-    '''print(row_list[0])
-    return jsonify({"results": ["hsa", "hsaaaa"], "descriptions": ["wehgCLKS.", "KWHFELK"]})
-    '''
 
 @app.route("/advanced", methods=['POST'])
 def advanced_construct():

@@ -117,7 +117,7 @@ export function ProteinInputField() {
       setSuggestions([]);
     }
   return(
-    <div className='flex flex-grow flex-col justify-around'>
+    <div className='flex flex-col justify-around'>
     <div className='flex flex-col max-w-1/2 text-wrap'>
           <label> 
           Enter a protein name:
@@ -133,9 +133,9 @@ export function ProteinInputField() {
         {suggestions.map((suggestion, idx)=> <button className='bg-white p-2' key={idx} onClick={() => handleSuggestionClick(idx)}>{suggestion}</button>)}
       </div>
       </div>
-      <div className='flex bg-white h-80 overflow-y-auto'>
+      {(idesignContext.protein != "") && <div className='flex bg-white h-80 overflow-y-auto'>
         <p className='break-all'>{idesignContext.protein}</p>
-      </div>
+      </div>}
     </div>
       
   );
@@ -372,7 +372,7 @@ export function SequenceInput() {
         {seq_name: "miRNA1[7:]", seq: "UCAGACUGAUGUUGACU", structure:")))))))))))))))))"},
         {seq_name: "Toehold", seq: "KKKKKKKKKK", structure:".........."},
         {seq_name: "RiboSwitchDisplace", seq: "RRRRRRRRRRRRR", structure:"((((((((((((("},
-        {seq_name: "Riboswitch", seq: "UUUUCCAUCAAGAACAGGCCACCAUGGAAAA", structure: "..............................."},
+        {seq_name: "Riboswitch", seq: "UUUUCCAUCAAGAACAGGCCACCAUGGAAAA", structure: "((((((((...............))))))))"},
         {seq_name: "comp(RiboSwitchDisplace)", seq: "rrrrrrrrrrrrr", structure:")))))))))))))"}
         ])
    }

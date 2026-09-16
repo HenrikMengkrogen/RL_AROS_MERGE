@@ -50,28 +50,30 @@ export default function Page() {
     );
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-around p-10">
-      <h1>miRNA Page</h1>
-      <div className="flex flex-row gap-4">
-        <div className="flex flex-col">
-        <label>
-        Pick a target:
-        <AsyncSelect<Option>
-          instanceId="target-select"
-          value={selectedOption}
-          onChange={(option) => handleTargetChange(option)}
-          loadOptions={loadOptions}
-          defaultOptions={options.slice(0, 10)}
-          options={options}
-          isClearable
-          isSearchable
-          placeholder="Select a disease..."
-          aria-label="Target disease selector"
-        />
-        </label>
-        {(miRNAResults.length != 0) && <MiRNATable miRNAList={miRNAResults} description={descriptions}/>}
+    <main className="flex min-h-screen flex-col justify-around p-10">
+      <h1 className="mb-4 text-2xl font-bold tracking-tight text-heading md:text-4xl lg:text-5xl text-center">miRNA Page</h1>
+      <p>Here you can look up disease-associated miRNAs from the HMDD database on the left and enter the chosen ones into the input fields on the right.
+ The final construct will activate (expose the ribosome binding site) in the presence of both of these miRNAs. </p>
+      <div className="flex  flex-row max-w-6xl justify-between gap-20">
+        <div className="flex flex-grow flex-col min-w-[300px] w-3/4">
+            <label>
+            Pick a target:
+            <AsyncSelect<Option>
+              instanceId="target-select"
+              value={selectedOption}
+              onChange={(option) => handleTargetChange(option)}
+              loadOptions={loadOptions}
+              defaultOptions={options.slice(0, 10)}
+              options={options}
+              isClearable
+              isSearchable
+              placeholder="Select a disease..."
+              aria-label="Target disease selector"
+            />
+            </label>
+            {(miRNAResults.length != 0) && <MiRNATable miRNAList={miRNAResults} description={descriptions}/>}
         </div>
-      <div>
+      <div className="min-w-[250px] w-1/4">
         <MiRNAInputField index={0} />
           <hr />
         <MiRNAInputField index={1} />
