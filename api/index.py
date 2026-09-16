@@ -410,7 +410,7 @@ def advanced_construct():
         best_result = min(results, key=lambda x: x[3])
 
         path = "./data/txt/" + str(random.random())[2:]
-        with open(path, "w") as f:
+        '''with open(path, "w") as f:
                         for res in results:
                              f.write(str(res))
                              f.write("\n")
@@ -419,6 +419,7 @@ def advanced_construct():
                              f.write("Target structure:    " +structure)
                              f.write("Generated structure: " +res[2])
                              f.write("\n")
+        '''
 
         return jsonify({"sequence": best_result[1], 
                         "generated_structure": best_result[2],
