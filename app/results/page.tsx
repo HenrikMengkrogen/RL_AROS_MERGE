@@ -15,6 +15,8 @@ export default function Page() {
    const iadvancedContext: IAdvancedContext = useContext(AdvancedContext);
    //output declarations
    const [submit, setSubmit] = useState(2)
+   const [invalidInput, setInvalidInput] = useState(false)
+   const [errortext, setErrorText] = useState("")
    const [txt_link, setTxt_link] = useState("")
    const [pdb_link, setPdb_link] = useState("")
    const [response, setdata] = useState({
@@ -33,8 +35,6 @@ export default function Page() {
         }
         else {
         setIsDataLoading(true)
-        console.log(iadvancedContext.sequence)
-        console.log(iadvancedContext.structure)
         await fetch(BACKEND_URL + "/advanced", {
                 method: "POST",
                 headers: { "Content-type": "application/json"},
@@ -71,12 +71,29 @@ export default function Page() {
 
 
     function handleButtonSubmit(e: any) {
-        setSubmit(submit == 2 ? 1 : -submit);
+        if (iadvancedContext.sequence.join("").length != iadvancedContext.structure.join("").length) {
+            setInvalidInput(true)
+            setErrorText(`the sequence and the structure has different lengths with: sequence: ${iadvancedContext.sequence.join("").length} structure: ${iadvancedContext.structure.join("").length}`)
+        } else {
+                const structure_chr_set = Array.from(new Set(iadvancedContext.structure.join("")))
+                const valid_characters = ['.', ')', '(']
+                if (structure_chr_set.some(function(e){ return !valid_characters.includes(e);})) {
+                    setInvalidInput(true)
+                    setErrorText(`the structure contains the following invalid charaters: ${structure_chr_set.filter(item => !valid_characters.includes(item))} The allowed characters are: . ( )`)
+                }
+                else {
+                    setInvalidInput(false)
+                    setSubmit(submit == 2 ? 1 : -submit);
+                }
+        }
+        
+        
     }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-around p-10">
     <h1 className="mb-4 text-2xl font-bold tracking-tight text-heading md:text-4xl lg:text-5xl">Results page</h1>
+    {invalidInput && <p className="text-red-500"> Invalid input: {errortext} </p>}
     <button onClick={handleButtonSubmit} className="py-4 px-4 rounded-full transition-colors bg-white hover:bg-[#383838] dark:hover:bg-[#ccc]">Construct the design!</button>
      {isDataLoading && <LoadingIndicator />}
      {!isDataLoading && submit !=2 && 

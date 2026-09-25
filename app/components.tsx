@@ -48,7 +48,6 @@ export function MiRNAInputField({index} :{index : number}) {
         //Update sequence to context
         const updated_miRNA_name_list = [...idesignContext.miRNA_name_list]
         updated_miRNA_name_list[index] = e.target.value
-        console.log(updated_miRNA_name_list)
         idesignContext.setMiRNA_name_list(updated_miRNA_name_list);
     }
 

@@ -16,6 +16,7 @@ export default function Page() {
    //output declarations
    const [submit, setSubmit] = useState(2)
    const [pdb_link, setPdb_link] = useState("")
+   const [invalidInput, setInvalidInput] = useState(false)
    const [response, setdata] = useState({
         sequence: "",
         generated_structure: "",
@@ -71,7 +72,13 @@ export default function Page() {
 
 
     function handleButtonSubmit(e: any) {
-        setSubmit(submit == 2 ? 1 : -submit);
+        if (idesignContext.miRNA_list.some(function(e){ return e == "";})) {
+            setInvalidInput(true)
+        }   
+        else {
+            setInvalidInput(false)
+            setSubmit(submit == 2 ? 1 : -submit);
+        }
     }
     //Demo1 paramteres
     function handleDemo1() {
@@ -84,6 +91,7 @@ export default function Page() {
     <p>Here you can construct the final design using your selected miRNAs and protein from the previous pages by simply clicking the "Construct design" button. 
         The "Demo data" button gives predefined values for miRNAs and protein, so by then clicking the "Construct design" button, the system can be easily inspected. The construction of the design may take some time.</p>
     <button onClick={handleDemo1} className="py-4 px-4 rounded-full transition-colors bg-white hover:bg-[#383838] dark:hover:bg-[#ccc]">Demo data 1</button>
+    {invalidInput && <p className="text-red-500">Invalid input: some miRNAs have length 0</p>}
     <button onClick={handleButtonSubmit} className="py-4 px-4 rounded-full transition-colors bg-white hover:bg-[#383838] dark:hover:bg-[#ccc]">Construct the design!</button>
      {isDataLoading && <LoadingIndicator />}
      {!isDataLoading && submit !=2 && <DesignOutput sequence={response.sequence} gen_structure={response.generated_structure} original_structure={response.original_structure} mfe={response.mfe}/>}
