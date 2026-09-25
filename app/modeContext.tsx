@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, createContext, Dispatch, SetStateAction} from 'react';
+import { useState, useEffect, createContext, Dispatch, SetStateAction} from 'react';
 
 
 export interface IModeContext {
@@ -15,14 +15,17 @@ let base_constant : IModeContext  = {
 
 const ModeContext = createContext<IModeContext>(base_constant);
 
-const ModeProvider = ({ children }: { children: React.ReactNode})  => {
-  const [isAdvancedMode, setisAdvancedMode] = useState(false);
+const ModeProvider = ({ children, initialMode }: { children: React.ReactNode, initialMode:boolean})  => {
+  const [isAdvancedMode, setisAdvancedMode] = useState(initialMode);
 
   const value: IModeContext = 
   {isAdvancedMode,
     setisAdvancedMode
   }
-
+  useEffect(() => {
+    cookieStore.set('mode', JSON.stringify(isAdvancedMode))
+  }, [isAdvancedMode])
+  
   return (
     <ModeContext.Provider value={value}>
       {children}
