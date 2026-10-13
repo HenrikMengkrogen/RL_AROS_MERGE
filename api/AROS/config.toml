@@ -1,0 +1,15 @@
+[target.x86_64-apple-darwin]
+rustflags = [
+    "-L", "/usr/local/opt/gsl/lib",
+    "-L", "vendor/RNAlib/lib"
+]
+
+[target.aarch64-apple-darwin]
+rustflags = [
+    "-L", "/usr/local/opt/gsl/lib",
+    "-L", "vendor/RNAlib/lib"
+]
+
+[env]
+LIBRNA_INCLUDE_DIR = "/usr/local/include"
+LIBRNA_LIB_DIR = "/usr/local/lib"

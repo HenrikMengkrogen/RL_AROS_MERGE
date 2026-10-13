@@ -1,0 +1,10 @@
+[target.x86_64-apple-darwin]
+rustflags = ["-L", "vendor/RNAlib/lib"]
+
+[target.aarch64-apple-darwin]
+rustflags = ["-L", "vendor/RNAlib/lib"]
+
+[env]
+LIBRNA_INCLUDE_DIR = { value = "vendor/RNAlib/include", relative = true }
+LIBRNA_LIB_DIR = { value = "vendor/RNAlib/lib", relative = true }
+RNALIB2_NO_PKG_CONFIG = "1"

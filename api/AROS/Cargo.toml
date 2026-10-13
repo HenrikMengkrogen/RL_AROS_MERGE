@@ -1,0 +1,22 @@
+[package]
+name = "AROS"
+version = "0.1.0"
+edition = "2024"
+build = "build.rs"
+
+[dependencies]
+rand = "0.10"
+
+libc = "0.2"
+rayon = "1.10"
+
+[build-dependencies]
+pkg-config = "0.3"
+bindgen = "0.72"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"

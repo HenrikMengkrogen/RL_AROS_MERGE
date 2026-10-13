@@ -1,0 +1,8 @@
+/target/
+*.o
+*.lo
+*.dylib
+.DS_Store
+target/
+target 2/
+.Rhistory

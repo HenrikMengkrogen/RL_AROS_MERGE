@@ -1,0 +1,65 @@
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAnnnnnnnnnnnnnnnnnnnnnnnUGACAAUGGUGUUUGNNNNNNNUCAGACUGAUGUUGACUNNNNNNNNNNNNNNNNNNNNNNNUUUUCCAUCAAGAACAGGCCACCAUGGAAAAnnnnnnnnnnnnn
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAGUAACGCGUCUCAUCCCUGUGUAUGACAAUGGUGUUUGGAGCUACUCAGACUGAUGUUGACUUACACAGGGAUGAGACGCGUUACUUUUCCAUCAAGAACAGGCCACCAUGGAAAAGUAACGCGUCUCA
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAACACAGUCCCAGGCCGAUUUGGGUGACAAUGGUGUUUGCAUGACAUCAGACUGAUGUUGACUCCCAAAUCGGCCUGGGACUGUGUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAACACAGUCCCAGG
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAGAUUUAAGUCUAUGCACGGAUUGUGACAAUGGUGUUUGCUGCGGAUCAGACUGAUGUUGACUCAAUCCGUGCAUAGACUUAAAUCUUUUCCAUCAAGAACAGGCCACCAUGGAAAAGAUUUAAGUCUAU
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCACCUGUACUCGACUUCGAGACCGUUGACAAUGGUGUUUGAACGACGUCAGACUGAUGUUGACUACGGUCUCGAAGUCGAGUACAGGUUUUCCAUCAAGAACAGGCCACCAUGGAAAACCUGUACUCGACU
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCACCGGCAUCAGCAGUAAUGAAACCUGACAAUGGUGUUUGUUAGUGUUCAGACUGAUGUUGACUGGUUUCAUUACUGCUGAUGCCGGUUUUCCAUCAAGAACAGGCCACCAUGGAAAACCGGCAUCAGCAG
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCACGAACGCUGGGGCAUGGGGGAAAUGACAAUGGUGUUUGUUAAGUUUCAGACUGAUGUUGACUUUUCCCCCAUGCCCCAGCGUUCGUUUUCCAUCAAGAACAGGCCACCAUGGAAAACGAACGCUGGGGC
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAUAAAGUGAGCGGCUCCACGCUUCUGACAAUGGUGUUUGUCUACGUUCAGACUGAUGUUGACUGAAGCGUGGAGCCGCUCACUUUAUUUUCCAUCAAGAACAGGCCACCAUGGAAAAUAAAGUGAGCGGC
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAAAGCUAGUUACUUGGGCUCCUCCUGACAAUGGUGUUUGUAUAAGUUCAGACUGAUGUUGACUGGAGGAGCCCAAGUAACUAGCUUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAAAGCUAGUUACUU
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAGGCAUAUCGACUUUCUCCAUCGAUGACAAUGGUGUUUGGGCCCGUUCAGACUGAUGUUGACUUCGAUGGAGAAAGUCGAUAUGCCUUUUCCAUCAAGAACAGGCCACCAUGGAAAAGGCAUAUCGACUU
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAGUACGUCGACGAUUAGUGCGAAGUGACAAUGGUGUUUGCAGUUAAUCAGACUGAUGUUGACUCUUCGCACUAAUCGUCGACGUACUUUUCCAUCAAGAACAGGCCACCAUGGAAAAGUACGUCGACGAU
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAACAAAACUCAAGUGACGACUACCUGACAAUGGUGUUUGCACCGUCUCAGACUGAUGUUGACUGGUAGUCGUCACUUGAGUUUUGUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAACAAAACUCAAGU
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAACCGGGCUGGACACUUAAUUCUUUGACAAUGGUGUUUGCUCAUCGUCAGACUGAUGUUGACUAAGAAUUAAGUGUCCAGCCCGGUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAACCGGGCUGGACA
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAGCCUUACUCCAGUGAGCGCUUGCUGACAAUGGUGUUUGACAGAACUCAGACUGAUGUUGACUGCAAGCGCUCACUGGAGUAAGGCUUUUCCAUCAAGAACAGGCCACCAUGGAAAAGCCUUACUCCAGU
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAGGUUAUUAUACAGCUCCGAGCGCUGACAAUGGUGUUUGGUCACCAUCAGACUGAUGUUGACUGCGCUCGGAGCUGUAUAAUAACCUUUUCCAUCAAGAACAGGCCACCAUGGAAAAGGUUAUUAUACAG
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAAUGCUCGAUCUCAGAGAAAGACAUGACAAUGGUGUUUGCUGGGGAUCAGACUGAUGUUGACUUGUCUUUCUCUGAGAUCGAGCAUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAAUGCUCGAUCUCA
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAAUAUCAUCUCCAUAUCUAGGCCGUGACAAUGGUGUUUGCCAACGCUCAGACUGAUGUUGACUCGGCCUAGAUAUGGAGAUGAUAUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAAUAUCAUCUCCAU
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAAUUACUAUCGGCGGCACUACUUAUGACAAUGGUGUUUGAAUACCGUCAGACUGAUGUUGACUUAAGUAGUGCCGCCGAUAGUAAUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAAUUACUAUCGGCG
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAACUUUUAAACUCCCACCCGAGCUUGACAAUGGUGUUUGAGGUGGCUCAGACUGAUGUUGACUAGCUCGGGUGGGAGUUUAAAAGUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAACUUUUAAACUCC
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAACUUUUAAACUCCCACCCGAGCUUGACAAUGGUGUUUGCCGAUCAUCAGACUGAUGUUGACUAGCUCGGGUGGGAGUUUAAAAGUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAACUUUUAAACUCC
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCACGUCCCCCGUACUCCUUUAAAAAUGACAAUGGUGUUUGGAUCUAGUCAGACUGAUGUUGACUUUUUUAAAGGAGUACGGGGGACGUUUUCCAUCAAGAACAGGCCACCAUGGAAAACGUCCCCCGUACU
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAACUGUGCUCCGAUUACAGAGAUAUGACAAUGGUGUUUGGAUCCCAUCAGACUGAUGUUGACUUAUCUCUGUAAUCGGAGCACAGUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAACUGUGCUCCGAU
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+

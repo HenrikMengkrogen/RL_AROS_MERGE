@@ -44,3 +44,23 @@ __pycache__
 
 # temp files
 .temp
+
+# Node
+node_modules/
+.next/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Rust build products
+api/AROS/target/
+
+# Generated AROS runtime files
+api/AROS/misc/input_1.txt
+api/AROS/misc/output/
+
+# Accidental duplicate runtime folder
+api/api/
+

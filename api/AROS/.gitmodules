@@ -1,0 +1,4 @@
+[submodule "vendor/ViennaRNA"]
+	path = vendor/ViennaRNA
+	url = https://github.com/HenrikMengkrogen/ViennaRNA.git
+	branch = ribosome-modifications

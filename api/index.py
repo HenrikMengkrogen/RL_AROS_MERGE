@@ -11,9 +11,19 @@ from flask import send_from_directory
 from flask import abort
 from flask_cors import CORS, cross_origin
 from openpyxl import load_workbook
+import subprocess
+from pathlib import Path
+
 
 app = Flask(__name__)
 
+API_DIR = Path(__file__).resolve().parent
+AROS_DIR = API_DIR / "AROS"
+MISC_DIR = AROS_DIR / "misc"
+
+AROS_INPUT_FILE = MISC_DIR / "input_1.txt"
+TEMP_DIR = MISC_DIR / "temp_folder"
+TEMP_FILE = TEMP_DIR / "temp_file.txt"
 
 
 
@@ -84,22 +94,33 @@ def mirna_suggestion():
 
 
 
-@app.route("/construct", methods=['POST'])
+@app.route("/construct", methods=["POST"])
+@app.route("/api/python/construct", methods=["POST"])
 def python_route():
-    if request.method == 'POST':
-        req_data = request.get_json()
-        #TODO Validate incoming data
-        #TODO Change defualt, just for testing
-        print(f"miRNA1: {req_data['miRNA1']} \n miRNA2: {req_data['miRNA2']} \n  protein: {req_data['protein']} \n")
-        [res_sequence, res_structure, original_structure, mfe] = construct_design([req_data['miRNA1'], req_data['miRNA2'], req_data['protein']])
+    req_data = request.get_json()
 
-        return jsonify({"sequence": res_sequence, 
-                "generated_structure": res_structure,
-                "original_structure": original_structure,
-                "mfe": mfe})
-                #"pdb_content_bytes": pdb_content})
-    else: 
-        print("Type of request is not POST")
+    print("========== CONSTRUCT ROUTE REACHED ==========", flush=True)
+    print(f"Request path: {request.path}", flush=True)
+    print(
+        f"miRNA1: {req_data['miRNA1']}\n"
+        f"miRNA2: {req_data['miRNA2']}\n"
+        f"protein: {req_data['protein']}\n",
+        flush=True,
+    )
+
+    res_sequence, res_structure, original_structure, mfe = construct_design([
+        req_data["miRNA1"],
+        req_data["miRNA2"],
+        req_data["protein"],
+    ])
+
+    return jsonify({
+        "sequence": res_sequence,
+        "generated_structure": res_structure,
+        "original_structure": original_structure,
+        "mfe": mfe,
+    })
+
     
 
 from pyfurnace import Origami
@@ -117,7 +138,8 @@ def comp(seq): # This is just generate the complementary domains -> since the sc
         if n in transcribe_dict:
             rna_seq += transcribe_dict[n]
         else:
-            rna_seq += n.swapcase()
+            #rna_seq += n.swapcase()
+            rna_seq += n
     return rna_seq[::-1]
 
 def get_pair_map(structure, sequence):
@@ -217,6 +239,95 @@ def bp_distance_to_target(seq, target_structure):
 
 
 
+def output_file(
+    domains_out,
+    structure_out,
+    path: Path = AROS_INPUT_FILE,
+):
+    if not isinstance(domains_out, str):
+        domains_out = "".join(domains_out)
+
+    if len(domains_out) != len(structure_out):
+        raise ValueError(
+            f"Sequence ({len(domains_out)}) and structure "
+            f"({len(structure_out)}) must be the same length."
+        )
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    path.write_text(
+        f"Sequence: {domains_out}\n"
+        f"Structure: {structure_out}\n",
+        encoding="utf-8",
+    )
+
+    return path
+
+
+
+    
+def input_file(path: Path = TEMP_DIR, file_name: str = "temp_file.txt"):
+    full_path = Path(path) / file_name
+
+    if not full_path.is_file():
+        raise FileNotFoundError(f"No such file: {full_path}")
+
+    sequence = None
+    structure = None
+
+    with full_path.open("r", encoding="utf-8") as file:
+        for line in file:
+            line = line.strip()
+
+            if line.startswith("Sequence:"):
+                sequence = line.split(":", 1)[1].strip()
+
+            elif line.startswith("Structure:"):
+                structure = line.split(":", 1)[1].strip()
+
+    if sequence is None or structure is None:
+        raise ValueError(
+            f"{full_path} must contain both a 'Sequence:' and a 'Structure:' line."
+        )
+
+    if len(sequence) != len(structure):
+        raise ValueError(
+            f"Sequence ({len(sequence)}) and structure "
+            f"({len(structure)}) must be the same length."
+        )
+
+    return sequence, structure
+
+def run_aros(project_dir: Path = AROS_DIR):
+    project_dir = Path(project_dir).resolve()
+
+    print(f"Running Cargo in: {project_dir}", flush=True)
+
+    result = subprocess.run(
+        ["cargo", "run", "--release"],
+        cwd=project_dir,
+        text=True,
+        capture_output=True,
+    )
+
+    print(f"Cargo return code: {result.returncode}", flush=True)
+
+    if result.stdout:
+        print(f"Cargo stdout:\n{result.stdout}", flush=True)
+
+    if result.stderr:
+        print(f"Cargo stderr:\n{result.stderr}", flush=True)
+
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"AROS failed with exit code {result.returncode}:\n"
+            f"{result.stderr}"
+        )
+
+    return result.stdout
+
+
 def hill_climb_design(seq_in, structure, max_steps=10000,
                        n_keep=5, temperature=1.0, cooling_rate=0.999, wobble_frequency=0.05): 
     comp_dict = {'A': 'U', 'U': 'A', 'G': 'C', 'C': 'G'}
@@ -298,11 +409,18 @@ def multi_start_hill_climb(seq_in, structure,
    
     return results
 
-
+def mutate_n_bases(sequence: str) -> str:
+    
+    return "".join(
+        random.choice("AUGC") if base == "N" else base
+        for base in sequence
+    )
 
 def construct_design(domains):
+    import random
     #RL3
-    '''miRNA1 = "UAGCUUAUCAGACUGAUGUUGACU"
+    '''
+    miRNA1 = "UAGCUUAUCAGACUGAUGUUGACU"
     miRNA2 = "UGGAGUGUGACAAUGGUGUUUG"
     '''
     miRNA1 = domains[0]
@@ -311,20 +429,32 @@ def construct_design(domains):
 
     #Gen ="CGUAAAGGAGAAGAACUUUUCACUGGAGUUGUCCCAAUUCUUGUUGAAUUAGAUGGUGAUGUUAAUGGGCACAAAUUUUCUGUCAGUGGAGAGGGUGAAGGUGAUGCAACAUACGGAAAACUUACCCUUAAAUUUAUUUGCACUACUGGAAAACUACCUGUUCCAUGGCCAACACUUGUCACUACUUUCGGUUAUGGUGUUCAAUGCUUUGCGAGAUACCCAGAUCAUAUGAAACAGCAUGACUUUUUCAAGAGUGCCAUGCCCGAAGGUUAUGUACAGGAAAGAACUAUAUUUUUCAAAGAUGACGGGAACUACAAGACACGUGCUGAAGUCAAGUUUGAAGGUGAUACCCUUGUUAAUAGAAUCGAGUUAAAAGGUAUUGAUUUUAAAGAAGAUGGAAACAUUCUUGGACACAAAUUGGAAUACAACUAUAACUCACACAAUGUAUACAUCAUGGCAGACAAACAAAAGAAUGGAAUCAAAGUUAACUUCAAAAUUAGACACAACAUUGAAGAUGGAAGCGUUCAACUAGCAGACCAUUAUCAACAAAAUACUCCAAUUGGCGAUGGCCCUGUCCUUUUACCAGACAACCAUUACCUGUCCACACAAUCUGCCCUUUCGAAAGAUCCCAACGAAAAGAGAGAuCACAUGGUCCUUCUUGAGUUUGUAACAGCUGCUGGGAUUACACAUGGCAUGGAUGAACUAUACAAAUAA"
 
-    Toehold = 'K' *10
+    Toehold = mutate_n_bases('N'*10)
+    #Toehold = 'N'*10
 
     loop7 = "N" * 7
 
     #RL3
-    RiboSwitchDisplace = "R" * 13
+    RiboSwitchDisplace = mutate_n_bases('N'*13)
+    #RiboSwitchDisplace = 'N'*13
     domain_order = (comp(miRNA1) + comp(miRNA2) + comp(RiboSwitchDisplace) + comp(Toehold) + miRNA2[7:]
                     + loop7 + miRNA1[7:] + Toehold + RiboSwitchDisplace + RiboSwitch + comp(RiboSwitchDisplace))
 
     structure_map = ('(' *len(comp(miRNA1)[7:]) + '.' *len(comp(miRNA1)[:7]) + '(' *len(comp(miRNA2)[7:]) + '.' *len(comp(miRNA2)[:7]) + '.' * len((comp(RiboSwitchDisplace) + comp(Toehold))) + ')' * len(miRNA2[7:]) + 
                      '.' * len(loop7) + ')' * len(miRNA1[7:]) + '.' * len(Toehold) + '(' * len(RiboSwitchDisplace) + '(' * 8 + '.' * (len(RiboSwitch) -16) + ')' * 8 +  ')' * len(comp(RiboSwitchDisplace)))
 
-    results = multi_start_hill_climb(domain_order, structure_map)
-    best_result = min(results, key=lambda x: x[3])
+
+
+    output_file(domain_order, structure_map)
+    run_aros()
+
+    res_sequence, res_structure = input_file()
+
+    print(res_sequence, flush=True)
+    print(res_structure, flush=True)
+
+    _, mfe = RNA.fold(res_sequence)
+    
     print(structure_map)
     '''with open("./data/run20.txt", "w") as f:
                 for res in results:
@@ -334,7 +464,8 @@ def construct_design(domains):
                      f.write("\n")
                      f.write("\n")
     '''
-    return [best_result[1],  best_result[2], structure_map, best_result[3]]
+    
+    return [res_sequence,res_structure,structure_map,mfe,]
 
 
 @app.route("/pdb", methods=['POST'])
@@ -366,13 +497,12 @@ def pdb_file():
                 #Single strand
                 else:
                     current_line.append(pf.single_strand(sequence=origami._matrix[i][j].sequence))
-        print(current_line)
+        
         origami_motif_build.append(current_line)
         current_line.clear()
         current_line = [pf.Dovetail(0, down_cross=False)]
 
-    print(origami)
-    print(origami_motif_build)
+    
     origami = origami_motif_build
     path = "./data/pdb/" + str(random.random())[2:]
     #origami.save_3d_model(path, pdb=True)
@@ -406,9 +536,11 @@ def advanced_construct():
         structure = req_data['structure']
         print(sequence)
         print(structure)
-        results = multi_start_hill_climb(sequence, structure)
-        best_result = min(results, key=lambda x: x[3])
-
+        res_sequence, res_structure = input_file()
+        _, mfe = RNA.fold(res_sequence)
+        
+        
+        
         path = "./data/txt/" + str(random.random())[2:]
         '''with open(path, "w") as f:
                         for res in results:
@@ -421,10 +553,14 @@ def advanced_construct():
                              f.write("\n")
         '''
 
-        return jsonify({"sequence": best_result[1], 
-                        "generated_structure": best_result[2],
-                        "mfe": best_result[3],
-                        "filepath": path})
+        
+        return jsonify({
+            "sequence": res_sequence,
+            "generated_structure": res_structure,
+            "mfe": mfe,
+            "filepath": path,
+        })
+
 
 
 @app.route('/data/txt/<path:filename>', methods=['GET'])

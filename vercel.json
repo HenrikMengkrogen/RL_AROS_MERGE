@@ -1,13 +1,54 @@
 {
-  "experimentalServices": {
+  "services": {
     "frontend": {
-      "entrypoint": ".",
+      "root": ".",
       "framework": "nextjs",
-      "routePrefix": "/"
+      "bindings": [
+        {
+          "type": "service",
+          "service": "backend",
+          "format": "url",
+          "env": "BACKEND_URL"
+        }
+      ]
     },
     "backend": {
-      "entrypoint": "api/index.py",
-      "routePrefix": "/api/python"
+      "root": "api",
+      "entrypoint": "index.py",
+      "rewrites": [
+        {
+          "source": "/api/python/:path(.*)?",
+          "destination": "/:path"
+        }
+      ],
+      "bindings": [
+        {
+          "type": "service",
+          "service": "frontend",
+          "format": "url",
+          "env": "FRONTEND_URL"
+        }
+      ]
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/python(/.*)?",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
+    }
+  ],
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_FRONTEND_URL": "/",
+      "NEXT_PUBLIC_BACKEND_URL": "/api/python"
     }
   }
 }
