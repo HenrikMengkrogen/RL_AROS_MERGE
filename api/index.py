@@ -267,37 +267,55 @@ def output_file(
 
 
     
-def input_file(path: Path = TEMP_DIR, file_name: str = "temp_file.txt"):
-    full_path = Path(path) / file_name
+def input_file(path: Path, file_pattern: str = "temp_file_*.txt"):
+    path = Path(path)
+    files = sorted(path.glob(file_pattern))
 
-    if not full_path.is_file():
-        raise FileNotFoundError(f"No such file: {full_path}")
+    
+    if not files and (path / "temp_file.txt").is_file():
+        files = [path / "temp_file.txt"]
 
-    sequence = None
-    structure = None
+    if not files:
+        raise FileNotFoundError(f"No output files matching {file_pattern} in {path}")
 
-    with full_path.open("r", encoding="utf-8") as file:
-        for line in file:
-            line = line.strip()
+    candidates = [] 
 
-            if line.startswith("Sequence:"):
-                sequence = line.split(":", 1)[1].strip()
+    for full_path in files:
+        sequence = structure = None
+        ensemble_div = None
 
-            elif line.startswith("Structure:"):
-                structure = line.split(":", 1)[1].strip()
+        with full_path.open("r", encoding="utf-8") as file:
+            for line in file:
+                line = line.strip()
+                if line.startswith("Sequence:"):
+                    sequence = line.split(":", 1)[1].strip()
+                elif line.startswith("Structure:"):
+                    structure = line.split(":", 1)[1].strip()
+                elif line.startswith("Ensemble_div:"):
+                    try:
+                        ensemble_div = float(line.split(":", 1)[1].strip())
+                    except ValueError:
+                        ensemble_div = None
 
-    if sequence is None or structure is None:
-        raise ValueError(
-            f"{full_path} must contain both a 'Sequence:' and a 'Structure:' line."
-        )
+        
+        if sequence is None or structure is None or len(sequence) != len(structure):
+            print(f"Skipping malformed output file: {full_path}", flush=True)
+            continue
 
-    if len(sequence) != len(structure):
-        raise ValueError(
-            f"Sequence ({len(sequence)}) and structure "
-            f"({len(structure)}) must be the same length."
-        )
+        
+        candidates.append((
+            ensemble_div if ensemble_div is not None else float("inf"),
+            sequence, structure, full_path.name,
+        ))
 
-    return sequence, structure
+    if not candidates:
+        raise ValueError(f"No valid output files found in {path}")
+
+    best = min(candidates, key=lambda c: c[0])
+    print(f"Picked {best[3]} with Ensemble_div={best[0]} "
+          f"out of {len(candidates)} candidates", flush=True)
+
+    return best[1], best[2]
 
 import shutil, tempfile
 

@@ -12,6 +12,7 @@ mod ribosome;
 mod structure;
 mod types;
 
+
 use crate::config::{
     DEFAULT_N_RUNS, DEFAULT_N_STARTS, GC_TEST, MAX_STEPS, RIBOSOMAL_RNA,
     WOBBLE_FREQUENCY,
@@ -179,7 +180,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             match &result {
                 Ok(_design_result) => {
                     if let Ok(design_result) = &result {
-                        if let Err(e) = write_data(&design_result.sequence, &target_structure) {
+                        if let Err(e) = write_data(&design_result.sequence, &target_structure, &design_result.ensemble_diversity, run) {
                             eprintln!("Could not write output: {e}");
                         }
                     }

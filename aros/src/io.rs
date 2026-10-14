@@ -58,28 +58,26 @@ pub fn gc_content(sequence: &str) -> Option<f64> {
     Some((percentage * 100.0).round() / 100.0)
 }
 
-pub fn write_data(sequence: &str, structure: &str) -> Result<(), std::io::Error> {
-    let positive: &str = "misc/temp_folder/temp_file.txt";
-    let negative: &str = "Python/Training_data/training_data_negative.txt";
-    
+pub fn write_data(
+    sequence: &str,
+    structure: &str,
+    ensemble_diversity: &f64,
+    round: usize,
+) -> Result<(), std::io::Error> {
+    let dir = Path::new("misc/temp_folder");
+    fs::create_dir_all(dir)?;
 
-    if let Some(dir) = Path::new(positive).parent() {
-        fs::create_dir_all(dir)?;
-    }
-    if let Some(dir) = Path::new(negative).parent() {
-        fs::create_dir_all(dir)?;
-    }
+    let path = dir.join(format!("temp_file_{}.txt", round));
 
-    
-        let mut file = OpenOptions::new().create(true).append(true).open(positive)?;
-    
+    // create + truncate: each round gets a fresh file
+    let mut file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(&path)?;
 
-        writeln!(file, "Sequence: {}", sequence)?;
-        writeln!(file, "Structure: {}", structure)?;
-        writeln!(file)?;
-        Ok(())
-    
-
-    
+    writeln!(file, "Sequence: {}", sequence)?;
+    writeln!(file, "Structure: {}", structure)?;
+    writeln!(file, "Ensemble_div: {}", ensemble_diversity)?;
+    Ok(())
 }
-
