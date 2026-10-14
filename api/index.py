@@ -299,32 +299,24 @@ def input_file(path: Path = TEMP_DIR, file_name: str = "temp_file.txt"):
 
     return sequence, structure
 
-def run_aros(project_dir: Path = AROS_DIR):
-    project_dir = Path(project_dir).resolve()
+import shutil, tempfile
 
-    print(f"Running Cargo in: {project_dir}", flush=True)
+API_DIR = Path(__file__).resolve().parent
+AROS_BIN = API_DIR / "bin" / "aros"
 
-    result = subprocess.run(
-        ["cargo", "run", "--release"],
-        cwd=project_dir,
-        text=True,
-        capture_output=True,
-    )
-
-    print(f"Cargo return code: {result.returncode}", flush=True)
-
-    if result.stdout:
-        print(f"Cargo stdout:\n{result.stdout}", flush=True)
-
-    if result.stderr:
-        print(f"Cargo stderr:\n{result.stderr}", flush=True)
-
+def run_aros(workdir: Path):
+    exe = Path("/tmp/aros_bin")
+    if not exe.exists():
+        shutil.copy(AROS_BIN, exe)
+        exe.chmod(0o755)
+    env = {**os.environ, "RUST_BACKTRACE": "1"}
+    result = subprocess.run([str(exe)], cwd=workdir, text=True,
+                            capture_output=True, timeout=240, env=env)
+    print(f"AROS exit code: {result.returncode}", flush=True)
+    print(f"AROS stdout:\n{result.stdout}", flush=True)
+    print(f"AROS stderr:\n{result.stderr}", flush=True)
     if result.returncode != 0:
-        raise RuntimeError(
-            f"AROS failed with exit code {result.returncode}:\n"
-            f"{result.stderr}"
-        )
-
+        raise RuntimeError(f"AROS failed ({result.returncode}):\n{result.stderr}")
     return result.stdout
 
 
@@ -445,15 +437,17 @@ def construct_design(domains):
 
 
 
-    output_file(domain_order, structure_map)
-    run_aros()
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        (work / "misc" / "temp_folder").mkdir(parents=True)
+        output_file(domain_order, structure_map, path=work / "misc" / "input_1.txt")
+        run_aros(work)
+        res_sequence, res_structure = input_file(path=work / "misc" / "temp_folder")
 
-    res_sequence, res_structure = input_file()
+        print(res_sequence, flush=True)
+        print(res_structure, flush=True)
 
-    print(res_sequence, flush=True)
-    print(res_structure, flush=True)
-
-    _, mfe = RNA.fold(res_sequence)
+        _, mfe = RNA.fold(res_sequence)
     
     print(structure_map)
     '''with open("./data/run20.txt", "w") as f:
@@ -536,7 +530,12 @@ def advanced_construct():
         structure = req_data['structure']
         print(sequence)
         print(structure)
-        res_sequence, res_structure = input_file()
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            (work / "misc" / "temp_folder").mkdir(parents=True)
+            output_file(sequence, structure, path=work / "misc" / "input_1.txt")
+            run_aros(work)
+            res_sequence, res_structure = input_file(path=work / "misc" / "temp_folder")
         _, mfe = RNA.fold(res_sequence)
         
         
