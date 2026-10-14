@@ -25,7 +25,7 @@ jobs:
       - name: Collect executables
         run: |
           mkdir out
-          find api/aros/target/x86_64-unknown-linux-gnu/release -maxdepth 1 -type f -perm -111 ! -name '*.so' ! -name '*.d' -exec cp {} out/ \;
+          find aros/target/x86_64-unknown-linux-gnu/release -maxdepth 1 -type f -perm -111 ! -name '*.so' ! -name '*.d' -exec cp {} out/ \;
           ls -la out
 
       - uses: actions/upload-artifact@v4
