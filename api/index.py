@@ -557,50 +557,39 @@ def resolve_domains(sequence: str, names: str = "RK", rng=random) -> str:
 
 @app.route("/advanced", methods=['POST'])
 def advanced_construct():
-    if request.method == 'POST':
-        req_data = request.get_json()
-        #TODO validate
-        sequence = req_data['sequence']
-        structure = req_data['structure']
+    req_data = request.get_json() or {}
+    sequence = req_data.get('sequence', '')
+    structure = req_data.get('structure', '')
+
+    if not sequence or len(sequence) != len(structure):
+        return jsonify({"error": "sequence and structure must be non-empty and the same length"}), 400
+
+    try:
         sequence = resolve_domains(sequence)
-        
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
-        print(sequence)
-        print(structure)
-        sequence = req_data.get('sequence', '')
-        structure = req_data.get('structure', '')
-        if not sequence or len(sequence) != len(structure):
-            return jsonify({"error": "sequence and structure must be non-empty and the same length"}), 400
-        with tempfile.TemporaryDirectory() as tmp:
-            work = Path(tmp)
-            (work / "misc" / "temp_folder").mkdir(parents=True)
-            output_file(sequence, structure, path=work / "misc" / "input_1.txt")
-            run_aros(work)
+    print(sequence, flush=True)
+    print(structure, flush=True)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        (work / "misc" / "temp_folder").mkdir(parents=True)
+        output_file(sequence, structure, path=work / "misc" / "input_1.txt")
+        run_aros(work)
+        try:
             res_sequence, res_structure = input_file(path=work / "misc" / "temp_folder")
-        _, mfe = RNA.fold(res_sequence)
-        
-        
-        
-        path = "./data/txt/" + str(random.random())[2:]
-        '''with open(path, "w") as f:
-                        for res in results:
-                             f.write(str(res))
-                             f.write("\n")
-                             f.write("Sequence: " +res[1])
-                             f.write("\n")
-                             f.write("Target structure:    " +structure)
-                             f.write("Generated structure: " +res[2])
-                             f.write("\n")
-        '''
+        except FileNotFoundError:
+            return jsonify({"error": "AROS could not design this input."}), 422
 
-        
-        return jsonify({
-            "sequence": res_sequence,
-            "generated_structure": res_structure,
-            "mfe": mfe,
-            "filepath": path,
-        })
-
+    _, mfe = RNA.fold(res_sequence)
+    path = "./data/txt/" + str(random.random())[2:]
+    return jsonify({
+        "sequence": res_sequence,
+        "generated_structure": res_structure,
+        "mfe": mfe,
+        "filepath": path,
+    })
 
 
 @app.route('/data/txt/<path:filename>', methods=['GET'])
