@@ -6,6 +6,8 @@ jobs:
     container: rust:1-bullseye   # older glibc (2.31) for compatibility
     steps:
       - uses: actions/checkout@v4
+        with: 
+         lfs: true
       - name: Install clang
         run: |
           sed -i 's|http://deb.debian.org/debian-security|http://archive.debian.org/debian-security|g; s|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list
