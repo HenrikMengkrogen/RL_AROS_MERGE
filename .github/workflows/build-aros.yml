@@ -1,0 +1,20 @@
+name: Build AROS (Linux)
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: rust:1-bullseye   # older glibc (2.31) for compatibility
+    steps:
+      - uses: actions/checkout@v4
+      - run: apt-get update && apt-get install -y clang libclang-dev
+      - run: cargo build --release --target x86_64-unknown-linux-gnu
+        working-directory: api/AROS
+      - name: Collect executables
+        run: |
+          mkdir out
+          find api/AROS/target/x86_64-unknown-linux-gnu/release -maxdepth 1 -type f -perm -111 ! -name '*.so' ! -name '*.d' -exec cp {} out/ \;
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aros-linux
+          path: out/
