@@ -63,3 +63,12 @@ Structure: (((((((((((((((((.......(((((((((((((((..............................
 Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAACUGUGCUCCGAUUACAGAGAUAUGACAAUGGUGUUUGGAUCCCAUCAGACUGAUGUUGACUUAUCUCUGUAAUCGGAGCACAGUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAACUGUGCUCCGAU
 Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
 
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAAAUUAUAAAACAGAACGCGUCACUGACAAUGGUGUUUGAGGUAUGUCAGACUGAUGUUGACUGUGACGCGUUCUGUUUUAUAAUUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAAAUUAUAAAACAG
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGCAUCAGCACUGUGAUAACUGCUCGGGGCAGCUCAGUACAGGAUCUCUCCUUCCUUACGCAUUCACCUGAGCUGCCCCGAGAUCCGACCACAGUGCUGAUGCUGUGAAUGCGUAAGGAAGGAGAGAUUUUCCAUCAAGAACAGGCCACCAUGGAAAAUCUCUCCUUCCUU
+Structure: (((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAAGCCAGAUCUUCAGUGUAACCGCUGACAAUGGUGUUUGACUCGUAUCAGACUGAUGUUGACUGCGGUUACACUGAAGAUCUGGCUUUUUCCAUCAAGAACAGGCCACCAUGGAAAAAGCCAGAUCUUCA
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+

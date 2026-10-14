@@ -64,3 +64,6 @@ api/AROS/misc/output/
 # Accidental duplicate runtime folder
 api/api/
 
+.env*
+api/AROS/target
+api/.venv
