@@ -3,24 +3,31 @@ on: workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: rust:1-bullseye   # older glibc (2.31) for compatibility
     steps:
       - uses: actions/checkout@v4
-        with: 
-         lfs: true
-      - name: Install clang
+        with:
+          lfs: true
+
+      - name: Check headers are real files, not LFS pointers
         run: |
-          sed -i 's|http://deb.debian.org/debian-security|http://archive.debian.org/debian-security|g; s|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list
-          echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99archive
-          apt-get update
-          apt-get install -y clang libclang-dev
-      - run: cargo build --release --target x86_64-unknown-linux-gnu
-        working-directory: api/AROS
+          head -3 api/AROS/vendor/RNAlib/include/ViennaRNA/fold_compound.h
+          ls -la api/AROS/vendor/RNAlib/prebuilt/x86_64-unknown-linux-gnu/
+
+      - name: Build in Debian 11 container (glibc 2.31)
+        run: |
+          docker run --rm -v "$PWD":/work -w /work/api/AROS rust:1-bullseye bash -c '
+            sed -i "s|http://deb.debian.org/debian-security|http://archive.debian.org/debian-security|g; s|http://deb.debian.org/debian|http://archive.debian.org/debian|g" /etc/apt/sources.list
+            echo "Acquire::Check-Valid-Until \"false\";" > /etc/apt/apt.conf.d/99archive
+            apt-get update && apt-get install -y clang libclang-dev
+            cargo build --release --target x86_64-unknown-linux-gnu
+          '
+
       - name: Collect executables
         run: |
           mkdir out
           find api/AROS/target/x86_64-unknown-linux-gnu/release -maxdepth 1 -type f -perm -111 ! -name '*.so' ! -name '*.d' -exec cp {} out/ \;
           ls -la out
+
       - uses: actions/upload-artifact@v4
         with:
           name: aros-linux
