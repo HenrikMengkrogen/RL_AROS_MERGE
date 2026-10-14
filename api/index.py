@@ -521,6 +521,40 @@ def target_disease():
     descriptions = diease_assoc_rows['description'].tolist()
     return jsonify({"results": miRNAs, "descriptions": descriptions})
 
+
+
+
+def resolve_domains(sequence: str, names: str = "RK", rng=random) -> str:
+    _COMP = {"A": "U", "U": "A", "G": "C", "C": "G"}
+   
+    seq = sequence
+    for name in names:
+        up, low = name.upper(), name.lower()
+        up_runs = list(re.finditer(f"{up}+", seq))
+        low_runs = list(re.finditer(f"{low}+", seq))
+        runs = up_runs + low_runs
+        if not runs:
+            continue
+
+        lengths = {m.end() - m.start() for m in runs}
+        if len(lengths) != 1:
+            raise ValueError(
+                f"Domain '{name}' appears with different lengths: {sorted(lengths)}"
+            )
+        length = lengths.pop()
+
+        domain = "".join(rng.choice("AUGC") for _ in range(length))
+        rev_comp = "".join(_COMP[b] for b in reversed(domain))
+
+        chars = list(seq)
+        for m in up_runs:
+            chars[m.start():m.end()] = domain
+        for m in low_runs:
+            chars[m.start():m.end()] = rev_comp
+        seq = "".join(chars)
+
+    return seq
+
 @app.route("/advanced", methods=['POST'])
 def advanced_construct():
     if request.method == 'POST':
@@ -528,8 +562,15 @@ def advanced_construct():
         #TODO validate
         sequence = req_data['sequence']
         structure = req_data['structure']
+        sequence = resolve_domains(sequence)
+        
+
         print(sequence)
         print(structure)
+        sequence = req_data.get('sequence', '')
+        structure = req_data.get('structure', '')
+        if not sequence or len(sequence) != len(structure):
+            return jsonify({"error": "sequence and structure must be non-empty and the same length"}), 400
         with tempfile.TemporaryDirectory() as tmp:
             work = Path(tmp)
             (work / "misc" / "temp_folder").mkdir(parents=True)
