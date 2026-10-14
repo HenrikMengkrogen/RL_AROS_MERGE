@@ -272,8 +272,8 @@ def input_file(path: Path, file_pattern: str = "temp_file_*.txt"):
     files = sorted(path.glob(file_pattern))
 
     
-    if not files and (path / "temp_file.txt").is_file():
-        files = [path / "temp_file.txt"]
+    #if not files and (path / "temp_file.txt").is_file():
+    #    files = [path / "temp_file.txt"]
 
     if not files:
         raise FileNotFoundError(f"No output files matching {file_pattern} in {path}")

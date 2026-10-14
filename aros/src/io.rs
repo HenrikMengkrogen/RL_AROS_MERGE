@@ -69,7 +69,7 @@ pub fn write_data(
 
     let path = dir.join(format!("temp_file_{}.txt", round));
 
-    // create + truncate: each round gets a fresh file
+    
     let mut file = OpenOptions::new()
         .create(true)
         .write(true)
