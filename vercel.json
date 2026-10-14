@@ -20,14 +20,6 @@
           "source": "/api/python/:path(.*)?",
           "destination": "/:path"
         }
-      ],
-      "bindings": [
-        {
-          "type": "service",
-          "service": "frontend",
-          "format": "url",
-          "env": "FRONTEND_URL"
-        }
       ]
     }
   },
