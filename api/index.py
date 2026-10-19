@@ -131,7 +131,8 @@ def comp(seq): # This is just generate the complementary domains -> since the sc
         'U': 'A',
         'G': 'C',
         'C': 'G',
-        'X': 'X'
+        'X': 'x',
+        'R': 'r'
     }
     rna_seq = ''
     for n in seq:
