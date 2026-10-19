@@ -131,8 +131,7 @@ def comp(seq): # This is just generate the complementary domains -> since the sc
         'U': 'A',
         'G': 'C',
         'C': 'G',
-        'X': 'x',
-        'R': 'r'
+        
     }
     rna_seq = ''
     for n in seq:
@@ -140,7 +139,7 @@ def comp(seq): # This is just generate the complementary domains -> since the sc
             rna_seq += transcribe_dict[n]
         else:
             #rna_seq += n.swapcase()
-            rna_seq += n
+            rna_seq += n.swapcase()
     return rna_seq[::-1]
 
 def get_pair_map(structure, sequence):
