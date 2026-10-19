@@ -439,14 +439,14 @@ def construct_design(domains):
 
     #Gen ="CGUAAAGGAGAAGAACUUUUCACUGGAGUUGUCCCAAUUCUUGUUGAAUUAGAUGGUGAUGUUAAUGGGCACAAAUUUUCUGUCAGUGGAGAGGGUGAAGGUGAUGCAACAUACGGAAAACUUACCCUUAAAUUUAUUUGCACUACUGGAAAACUACCUGUUCCAUGGCCAACACUUGUCACUACUUUCGGUUAUGGUGUUCAAUGCUUUGCGAGAUACCCAGAUCAUAUGAAACAGCAUGACUUUUUCAAGAGUGCCAUGCCCGAAGGUUAUGUACAGGAAAGAACUAUAUUUUUCAAAGAUGACGGGAACUACAAGACACGUGCUGAAGUCAAGUUUGAAGGUGAUACCCUUGUUAAUAGAAUCGAGUUAAAAGGUAUUGAUUUUAAAGAAGAUGGAAACAUUCUUGGACACAAAUUGGAAUACAACUAUAACUCACACAAUGUAUACAUCAUGGCAGACAAACAAAAGAAUGGAAUCAAAGUUAACUUCAAAAUUAGACACAACAUUGAAGAUGGAAGCGUUCAACUAGCAGACCAUUAUCAACAAAAUACUCCAAUUGGCGAUGGCCCUGUCCUUUUACCAGACAACCAUUACCUGUCCACACAAUCUGCCCUUUCGAAAGAUCCCAACGAAAAGAGAGAuCACAUGGUCCUUCUUGAGUUUGUAACAGCUGCUGGGAUUACACAUGGCAUGGAUGAACUAUACAAAUAA"
 
-    Toehold = mutate_n_bases('N'*10)
-    #Toehold = 'N'*10
+    #Toehold = mutate_n_bases('N'*10)
+    Toehold = 'X'*10
 
     loop7 = "N" * 7
 
     #RL3
-    RiboSwitchDisplace = mutate_n_bases('N'*13)
-    #RiboSwitchDisplace = 'N'*13
+    #RiboSwitchDisplace = mutate_n_bases('N'*13)
+    RiboSwitchDisplace = 'R'*13
     domain_order = (comp(miRNA1) + comp(miRNA2) + comp(RiboSwitchDisplace) + comp(Toehold) + miRNA2[7:]
                     + loop7 + miRNA1[7:] + Toehold + RiboSwitchDisplace + RiboSwitch + comp(RiboSwitchDisplace))
 
@@ -583,7 +583,7 @@ def advanced_construct():
         return jsonify({"error": "sequence and structure must be non-empty and the same length"}), 400
 
     try:
-        sequence = resolve_domains(sequence)
+        sequence = sequence.replace("K", "X").replace("k", "x")
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
