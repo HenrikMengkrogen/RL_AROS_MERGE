@@ -1,0 +1,3 @@
+Sequence: AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCACGUCCCCGGCCCGGGCACACCCCUGACAAUGGUGUUUGGUACAGAUCAGACUGAUGUUGACUGCGACCGCCCUACGCACGACUACUUUUCCAUCAAGAACAGGCCACCAUGGAAAAGUAGUCGUGCGUA
+Structure: (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+Ensemble_div: 9.858619479234486

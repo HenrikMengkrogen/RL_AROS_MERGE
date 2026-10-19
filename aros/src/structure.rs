@@ -1,5 +1,6 @@
 use crate::types::Substructure;
 use std::collections::{HashMap, HashSet};
+use rand::RngExt;
 
 pub fn get_pair_map(structure: &str) -> HashMap<usize, usize> {
     let mut pair_map = HashMap::new();
@@ -328,4 +329,81 @@ pub fn replace_selected_positions(
 
     String::from_utf8(output)
         .map_err(|error| format!("Generated invalid UTF-8 sequence: {error}"))
+}
+
+pub fn is_placeholder(c: char) -> bool {
+    matches!(c, 'R' | 'r' | 'X' | 'x')
+}
+
+pub fn complement(c: char) -> Option<char> {
+    match c {
+        'A' => Some('U'),
+        'U' => Some('A'),
+        'G' => Some('C'),
+        'C' => Some('G'),
+        'R' => Some('r'),
+        'r' => Some('R'),
+        'X' => Some('x'),
+        'x' => Some('X'),
+        _ => None,
+    }
+}
+
+
+pub fn to_foldable(seq: &str) -> String {
+    seq.chars()
+        .map(|c| match c {
+            'R' => 'G',
+            'r' => 'C',
+            'X' => 'A',
+            'x' => 'U',
+            other => other,
+        })
+        .collect()
+}
+
+
+pub fn enforce_placeholders(
+    chars: &mut [char],
+    seq_in: &[char],
+    pair_map: &HashMap<usize, usize>,
+) {
+    for (i, &c) in seq_in.iter().enumerate() {
+        if is_placeholder(c) {
+            chars[i] = c;
+            if let Some(&j) = pair_map.get(&i) {
+                if let Some(comp) = complement(c) {
+                    chars[j] = comp;
+                }
+            }
+        }
+    }
+}
+
+pub fn resolve_placeholders(seq: &str, structure: &str, gc_only: bool) -> String {
+    let mut rng = rand::rng();
+    let pair_map = get_pair_map(structure);
+    let mut s: Vec<char> = seq.chars().collect();
+
+    let pool: &[char] = if gc_only { &['G', 'C'] } else { &['A', 'U', 'G', 'G', 'G', 'C', 'C', 'C', 'G', 'C'] };
+    let comp = |c: char| match c { 'A'=>'U','U'=>'A','G'=>'C','C'=>'G', o=>o };
+
+    // 1. Big letters (R, X) get random bases
+    for p in 0..s.len() {
+        if s[p] == 'R' || s[p] == 'X' {
+            s[p] = pool[rng.random_range(0..pool.len())];
+        }
+    }
+    // 2. Small letters (r, x): complement of their structural partner if it was R/X
+    let orig: Vec<char> = seq.chars().collect();
+    for p in 0..s.len() {
+        if orig[p] == 'r' || orig[p] == 'x' {
+            let want_big = if orig[p] == 'r' { 'R' } else { 'X' };
+            s[p] = match pair_map.get(&p) {
+                Some(&q) if orig[q] == want_big => comp(s[q]),
+                _ => pool[rng.random_range(0..pool.len())], // unpaired or paired elsewhere
+            };
+        }
+    }
+    s.into_iter().collect()
 }

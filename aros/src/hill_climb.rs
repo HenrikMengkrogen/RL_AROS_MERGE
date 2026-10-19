@@ -1,7 +1,7 @@
 use rand::RngExt;
 use rand::seq::IndexedRandom;
 use rayon::prelude::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use crate::config::{RIBOSOMAL_RNA, USE_ML_MODEL};
 use crate::folding::{bp_distance_to_target, compute_pf_defect, score_candidate};
@@ -9,7 +9,7 @@ use crate::mutation::{mutate_ribosome, mutate_seq};
 use crate::pseudoknot::pk_pair_mismatches;
 use crate::structure::{
     expand_positions_near_mismatches, find_hard_loops, find_mismatched_positions, get_pair_map,
-    reduce_positions_by_mismatch_proximity,
+    reduce_positions_by_mismatch_proximity,is_placeholder, enforce_placeholders,complement, to_foldable
 };
 use crate::types::DesignResult;
 
@@ -28,10 +28,18 @@ pub fn hill_climb_design(
     last_global: bool,
     seed_seq: &str,
 ) -> Vec<DesignResult> {
+    let seq_in_chars: Vec<char> = seq_in.chars().collect();
     let pair_map = get_pair_map(target_structure);
+    let trial_cost_of = |trial: &[char]| -> f64 {
+    let s: String = trial.iter().collect();
+    let f = to_foldable(&s);
+    let r = bp_distance_to_target(&f, target_structure);
+    let pk = pk_pair_mismatches(&f, &pair_map, target_structure);
+        r.bp_distance as f64 + 2.0 * pk as f64
+    };
 
     let slice_len = target_structure.len();
-    let n_designable = n_positions.len();
+    let n_designable = n_positions.len();   
 
     let mut n_positions = n_positions;
     let original_designable_positions: HashSet<usize> = n_positions.iter().copied().collect();
@@ -86,8 +94,7 @@ pub fn hill_climb_design(
         ('G', 'U'),
         ('U', 'G'),
     ];
-    let seq_in_chars: Vec<char> = seq_in.chars().collect();
-    let comp_dict = HashMap::from([('A', 'U'), ('U', 'A'), ('G', 'C'), ('C', 'G')]);
+    
 
     let mut current = if RIBOSOMAL_RNA {
         mutate_ribosome(seq_in, target_structure, &n_positions)
@@ -164,9 +171,10 @@ pub fn hill_climb_design(
             }
         }
     }
+    enforce_placeholders(&mut current_chars, &seq_in_chars, &pair_map);
     current = current_chars.into_iter().collect();
 
-    let initial_score = score_candidate(&current, target_structure, &pair_map);
+    let initial_score = score_candidate(&to_foldable(&current), target_structure, &pair_map);
 
     let mut current_dist = initial_score.total_distance;
     let mut current_structure = initial_score.structure;
@@ -191,7 +199,7 @@ pub fn hill_climb_design(
 
     // ##################
 
-    let mut last_expand_step: i64 = -1000;
+    let last_expand_step: i64 = -1000;
     let mut last_double_step: i64 = -1000;
     for step in 0..max_steps {
         if best_candidates[0].0 == 0 && best_candidates.len() >= n_keep {
@@ -256,12 +264,8 @@ pub fn hill_climb_design(
                             nucleotides.clone()
                         } else {
                             let fixed_partner = candidate[j1];
-
-                            vec![
-                                *comp_dict
-                                    .get(&fixed_partner)
-                                    .expect("fixed paired position must contain A, U, G, or C"),
-                            ]
+                            vec![complement(fixed_partner)
+                                .expect("fixed paired position must contain A, U, G, C, R, r, X or x")]
                         }
                     } else {
                         nucleotides.clone()
@@ -272,12 +276,8 @@ pub fn hill_climb_design(
                             nucleotides.clone()
                         } else {
                             let fixed_partner = candidate[j2];
-
-                            vec![
-                                *comp_dict
-                                    .get(&fixed_partner)
-                                    .expect("fixed paired position must contain A, U, G, or C"),
-                            ]
+                            vec![complement(fixed_partner)
+                                .expect("fixed paired position must contain A, U, G, C, R, r, X or x")]
                         }
                     } else {
                         nucleotides.clone()
@@ -291,7 +291,7 @@ pub fn hill_climb_design(
 
                             if let Some(&j1) = pair_map.get(&i1) {
                                 if designable_positions.contains(&j1) {
-                                    trial[j1] = comp_dict[&n1];
+                                    trial[j1] = complement(n1).unwrap();
                                 }
                             }
 
@@ -299,28 +299,17 @@ pub fn hill_climb_design(
 
                             if let Some(&j2) = pair_map.get(&i2) {
                                 if designable_positions.contains(&j2) {
-                                    trial[j2] = comp_dict[&n2];
+                                    trial[j2] = complement(n2).unwrap();
                                 }
                             }
 
-                            let trial_str: String = trial.iter().collect();
-
-                            let trial_result = bp_distance_to_target(&trial_str, target_structure);
-
-                            let pk_mismatches =
-                                pk_pair_mismatches(&trial_str, &pair_map, target_structure);
-
-                            let trial_cost =
-                                trial_result.bp_distance as f64 + 2.0 * pk_mismatches as f64;
+                            let trial_cost = trial_cost_of(&trial);
 
                             if trial_cost < best_cost { best_cost = trial_cost; best_trial = trial.clone(); }
                             trials += 1;
                             if best_cost == 0.0 || trials >= MAX_DOUBLE_TRIALS { break 'outer; }
 
-                            if trial_cost < best_cost {
-                                best_cost = trial_cost;
-                                best_trial = trial;
-                            }
+                            
                         }
                     }
                 
@@ -339,43 +328,32 @@ pub fn hill_climb_design(
 
             if let Some(&j) = pair_map.get(&i) {
                 if !designable_positions.contains(&j) {
-                    let current_nuc = candidate[i];
-                    let mut best_nuc = current_nuc;
-                    let mut best_cost = f64::MAX;
-
                     let fixed_partner = candidate[j];
 
-                    let allowed_nucs = vec![
-                        *comp_dict
-                            .get(&fixed_partner)
-                            .expect("fixed paired position must contain A, U, G, or C"),
-                    ];
+                    if is_placeholder(fixed_partner) {
+                        candidate[i] = complement(fixed_partner).unwrap();
+                    } else {
+                        let current_nuc = candidate[i];
+                        let mut best_nuc = current_nuc;
+                        let mut best_cost = f64::MAX;
+                        let allowed = complement(fixed_partner)
+                            .expect("fixed paired position must contain A, U, G, C, R, r, X or x");
 
-                    for &nuc in &nucleotides {
-                        let mut trial = candidate.clone();
-                        trial[i] = nuc;
-
-                        let trial_str: String = trial.iter().collect();
-
-                        let trial_result = bp_distance_to_target(&trial_str, target_structure);
-
-                        let pk_mismatches =
-                            pk_pair_mismatches(&trial_str, &pair_map, target_structure);
-
-                        let trial_cost =
-                            trial_result.bp_distance as f64 + 2.0 * pk_mismatches as f64;
-
-                        if trial_cost < best_cost {
-                            best_cost = trial_cost;
-                            best_nuc = nuc;
+                        for &nuc in &nucleotides {
+                            let mut trial = candidate.clone();
+                            trial[i] = nuc;
+                            let trial_cost = trial_cost_of(&trial);
+                            if trial_cost < best_cost {
+                                best_cost = trial_cost;
+                                best_nuc = nuc;
+                            }
                         }
-                    }
 
-                    if best_nuc == current_nuc {
-                        best_nuc = allowed_nucs[0];
+                        if best_nuc == current_nuc {
+                            best_nuc = allowed;
+                        } 
+                        candidate[i] = best_nuc;
                     }
-
-                    candidate[i] = best_nuc;
                 } else {
                     let current_pair = (candidate[i], candidate[j]);
                     let mut best_pair = current_pair;
@@ -417,13 +395,12 @@ pub fn hill_climb_design(
                 for &nuc in &nucleotides {
                     let mut trial = candidate.clone();
                     trial[i] = nuc;
+                    
 
                     let trial_str: String = trial.iter().collect();
-
-                    let trial_result = bp_distance_to_target(&trial_str, target_structure);
-
-                    let pk_mismatches = pk_pair_mismatches(&trial_str, &pair_map, target_structure);
-
+                    let trial_fold = to_foldable(&trial_str);
+                    let trial_result = bp_distance_to_target(&trial_fold, target_structure);
+                    let pk_mismatches = pk_pair_mismatches(&trial_fold, &pair_map, target_structure);
                     let trial_cost = trial_result.bp_distance as f64 + 2.0 * pk_mismatches as f64;
 
                     if trial_cost < best_cost {
@@ -442,8 +419,7 @@ pub fn hill_climb_design(
 
         let candidate_string: String = candidate.into_iter().collect();
 
-        let candidate_score = score_candidate(&candidate_string, target_structure, &pair_map);
-
+        let candidate_score = score_candidate(&to_foldable(&candidate_string), target_structure, &pair_map);
         let cand_dist = candidate_score.total_distance;
         let cand_energy_gap = candidate_score.energy_gap;
 
@@ -505,7 +481,7 @@ pub fn hill_climb_design(
                 1.0
             } else {
                 let (_cost, defects, _mfe, _e_target) =
-                    compute_pf_defect(&current, target_structure);
+                    compute_pf_defect(&to_foldable(&current), target_structure);
 
                 fixed_mismatches
                     .iter()
@@ -531,7 +507,7 @@ pub fn hill_climb_design(
         const MIN_ACTIVE_POSITIONS: usize = 15;
         const STAGNATION_STEPS: i64 = 12;
         const CLOSE_TARGET_DISTANCE: i64 = 6; // Originally 4
-        let expansion_radius: usize = (seq_in.len() as usize)*0.2 as usize;
+        let expansion_radius: usize = ((seq_in.len() as f64) * 0.2) as usize;
         
 
         if step > 0 && step % 20 == 0 && current_dist > 0 {
@@ -549,6 +525,7 @@ pub fn hill_climb_design(
                     expansion_radius,
                 );
 
+
                 if expanded.len() > n_positions.len() {
                     println!(
                         "stagnation at dist {}: expanding {} -> {} positions",
@@ -557,8 +534,10 @@ pub fn hill_climb_design(
                         expanded.len()
                     );
                     n_positions = expanded;
+                    n_positions.retain(|&p| !is_placeholder(seq_in_chars[p]));
                     designable_positions = n_positions.iter().copied().collect();
-                    last_expand_step = step;
+
+                    
                 }
             } else if step - last_expand_step >= 60 {
                 let reduced = reduce_positions_by_mismatch_proximity(
@@ -572,7 +551,9 @@ pub fn hill_climb_design(
                     designable_positions = n_positions.iter().copied().collect();
                 }
             }
+            
         }
+        
 
         let stall_limit: i64 = if current_dist <= CLOSE_TARGET_DISTANCE {
             200

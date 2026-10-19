@@ -18,7 +18,7 @@ use crate::pseudoknot::{
 use crate::ribosome::ribosome_similarity;
 use crate::structure::{
     find_conserved_positions, get_local_protected_positions, get_pair_map, get_pk_pairs,
-    identify_mismatches, important_motifs, strip_pseudoknots,replace_selected_positions,
+    identify_mismatches, important_motifs, strip_pseudoknots,replace_selected_positions,resolve_placeholders,
 };
 use crate::types::{DesignResult, GlobalDesignResult, PkPrediction};
 
@@ -47,6 +47,7 @@ pub fn decomposed_hill_climb_design(
     }
     let _project_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     
+    
 
     let conserved_motifs = important_motifs();
     let conserved_motifs = find_conserved_positions(&start_seq, &conserved_motifs);
@@ -54,7 +55,8 @@ pub fn decomposed_hill_climb_design(
     let if_slices: bool = true;
     let slices = decompose(target).map_err(|e| e.to_string())?;
 
-    let mut seq = start_seq.as_bytes().to_vec();
+    let resolved_seq = resolve_placeholders(&start_seq, &target, GC_TEST);
+    let mut seq = resolved_seq.as_bytes().to_vec();
     if RIBOSOMAL_RNA {
         let mut rng = rand::rng();
         let nucleotides = ['A', 'U', 'G', 'C'];
@@ -827,7 +829,7 @@ pub fn merge_slice_into_global_seed(
         let global_position = start + offset;
 
         match base {
-            b'A' | b'U' | b'G' | b'C' => {
+            b'A' | b'U' | b'G' | b'C'| b'R' | b'r' | b'X'| b'x' => {
                 global_bases[global_position] = base;
             }
 

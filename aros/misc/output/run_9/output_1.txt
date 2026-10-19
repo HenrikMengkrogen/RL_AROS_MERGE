@@ -1,0 +1,10 @@
+==== FINAL (run 9) ====
+sequence      : AGUCAACAUCAGUCUGAUAAGCUACAAACACCAUUGUCACACUCCAGCCUUCCUCCGUCGAUGCCGAGCUGACAAUGGUGUUUGACCCAACUCAGACUGAUGUUGACUCCUCCCCCCCCGAACCCCCGUACUUUUCCAUCAAGAACAGGCCACCAUGGAAAAGUACGGGGGUUCG
+target        : (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+mfe structure : (((((((((((((((((.......(((((((((((((((..............................))))))))))))))).......)))))))))))))))))..........(((((((((((((((((((((...............)))))))))))))))))))))
+bp_distance   : 0
+mfe           : -89.80
+Ensemble Diversity : 8.36
+slices        : 3
+Ribosomal RNA used: false
+GC Content: 52.57%

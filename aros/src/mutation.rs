@@ -39,6 +39,47 @@ pub fn mutate_seq(
 
     let mutable_positions: HashSet<usize> = n_positions.iter().copied().collect();
 
+    for (big, small) in [('R', 'r'), ('X', 'x')] {
+        let big_pos: Vec<usize> = (0..mut_seq.len()).filter(|&p| mut_seq[p] == big).collect();
+        let small_pos: Vec<usize> = (0..mut_seq.len()).filter(|&p| mut_seq[p] == small).collect();
+
+        if big_pos.is_empty() && small_pos.is_empty() {
+            continue;
+        }
+
+        if big_pos.len() == small_pos.len() {
+            // One shared domain sequence; the small domain is its reverse complement.
+            let domain: Vec<char> = (0..big_pos.len())
+                .map(|_| paired_nucleotides[rng.random_range(0..paired_nucleotides.len())])
+                .collect();
+            let n = domain.len();
+            for (k, &p) in big_pos.iter().enumerate() {
+                mut_seq[p] = domain[k];
+            }
+            for (k, &p) in small_pos.iter().enumerate() {
+                mut_seq[p] = comp_dict[&domain[n - 1 - k]];
+            }
+        } else {
+            eprintln!(
+                "mutate_seq: domain {big}/{small} has {} vs {} positions; \
+                falling back to pairwise assignment",
+                big_pos.len(),
+                small_pos.len()
+            );
+            for &p in big_pos.iter().chain(small_pos.iter()) {
+                mut_seq[p] = paired_nucleotides[rng.random_range(0..paired_nucleotides.len())];
+            }
+            // pair-map pass below does not touch these, so fix partners here
+            for &p in big_pos.iter().chain(small_pos.iter()) {
+                if let Some(&j) = pair_map.get(&p) {
+                    if let Some(&c) = comp_dict.get(&mut_seq[p]) {
+                        mut_seq[j] = c;
+                    }
+                }
+            }
+        }
+    }
+
     let mut processed_pairs: HashSet<(usize, usize)> = HashSet::new();
 
     for &i in n_positions {
